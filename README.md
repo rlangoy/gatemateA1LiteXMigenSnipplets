@@ -33,16 +33,11 @@ A minimal LED blinker demonstrating the basics of Migen/LiteX development. This 
 See the [ledBlink README](./ledBlink/README.md) for detailed build and programming instructions.
 
 ## Prerequisites
-
-To work with these examples, you'll need:
-
-- **Python 3** with the following packages:
-  - [LiteX](https://github.com/enjoy-digital/litex)
-  - [Migen](https://github.com/m-labs/migen)
-- **Yosys** - for synthesis
-- **Cologne Chip p_r** - place-and-route toolchain
-- **openFPGALoader** - for programming the FPGA
-- **JTAG adapter** - such as DirtyJTAG or compatible
+Install: <br> 
+- LiteX <br>
+- ToolChain for FPGA. <br>
+- RISCV-V prosessor PicoRV32 (optional) <br>
+ Ubuntu 24.04, Install instruction for [GateMateA1-EVB](https://github.com/rlangoy/gatemateA1LiteXMigenSnipplets/blob/main/litex_picorv32_gatemate_a1_e.md)
 
 ## Getting Started
 
