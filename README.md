@@ -25,7 +25,7 @@ A minimal LED blinker demonstrating the basics of Migen/LiteX development. This 
 
 **Features:**
 - 26-bit counter increments on the 10 MHz clock
-- Bit 25 toggles the user LED approximately every ~3.4 seconds
+- Bit 23 toggles the user LED approximately every ~1.2 seconds
 - Complete build and programming instructions
 
 **Location**: [`ledBlink/`](./ledBlink/)
