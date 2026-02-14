@@ -24,7 +24,8 @@ led = platform.request("user_led_n", 0)
 module = Blink(led)
 
 # build the design
-platform.build(module)
+# platform.build(module)
 
-
-
+# — use absolute path to avoid LiteX build_dir CWD bug
+import os
+platform.build(module, build_dir=os.path.join(os.getcwd(), "build"))
