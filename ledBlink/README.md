@@ -9,10 +9,6 @@ A 26-bit counter increments on every rising edge of the 10 MHz board clock (`clk
 ## Prerequisites
 
 - Python 3 with **LiteX** and **Migen** installed
-- **Yosys** (synthesis)
-- **Cologne Chip p_r** place-and-route toolchain
-- **openFPGALoader** (programming)
-- A JTAG adapter (e.g. DirtyJTAG)
 
 ## Build
 
