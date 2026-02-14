@@ -4,7 +4,7 @@ A minimal LED blinker for the **Cologne Chip GateMate CCGM1A1** FPGA on the **Co
 
 ## What it does
 
-A 26-bit counter increments on every rising edge of the 10 MHz board clock (`clk10`). Bit 25 drives `user_led_n0`, toggling the LED roughly every ~3.4 seconds.
+A 26-bit counter increments on every rising edge of the 10 MHz board clock (`clk10`). Bit 23 drives `user_led_n0`, toggling the LED roughly every ~1.2 seconds.
 
 ## Prerequisites
 
