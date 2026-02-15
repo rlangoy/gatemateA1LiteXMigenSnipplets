@@ -127,6 +127,8 @@ source ~/.bashrc
 ```
 
 ---
+#### Note 
+The new toolchain oss-cad-suite (https://github.com/YosysHQ/oss-cad-suite-build) as of2026-02-11 11:43:26 +0100 ,does not work width LiteX (/litex/build/colognechip/colognechip.py needs patching (replace it with litexPatch/colognechip.py))
 
 ## 6. Environment Ready
 
