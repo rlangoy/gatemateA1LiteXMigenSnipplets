@@ -28,9 +28,9 @@ A minimal LED blinker demonstrating the basics of Migen/LiteX development. This 
 - Bit 23 toggles the user LED approximately every ~1.2 seconds
 - Complete build and programming instructions
 
-**Location**: [`ledBlink/`](./ledBlink/)
+**Location**: [`00ledBlink/`](./00ledBlink/)
 
-See the [ledBlink README](./ledBlink/README.md) for detailed build and programming instructions.
+See the [00ledBlink README](./00ledBlink/README.md) for detailed build and programming instructions.
 
 ## Prerequisites
 Install: <br> 
@@ -55,8 +55,8 @@ Install: <br>
 
 ```
 .
-├── README.md           # This file
-└── ledBlink/          # LED blinker example
+├── README.md          # This file
+└── 00ledBlink/        # LED blinker example
     ├── README.md      # Detailed project documentation
     └── blinkLed.py    # Migen/LiteX source code
 ```
