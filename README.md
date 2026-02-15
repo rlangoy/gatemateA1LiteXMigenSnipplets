@@ -15,7 +15,7 @@ The examples in this repository target the **GateMateA1-EVB** development board:
 
 ## Projects
 
-### 1. ledBlink
+### 1. 00ledBlink
 
 A minimal LED blinker demonstrating the basics of Migen/LiteX development. This project shows how to:
 - Create a simple counter-based LED blinker
