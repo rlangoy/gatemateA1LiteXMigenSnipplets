@@ -37,7 +37,7 @@ Install: <br>
 - LiteX <br>
 - ToolChain for FPGA. <br>
 - RISCV-V prosessor PicoRV32 (optional) <br>
- Ubuntu 24.04, Install instruction for [GateMateA1-EVB](https://github.com/rlangoy/gatemateA1LiteXMigenSnipplets/blob/main/litex_picorv32_gatemate_a1_e.md)
+ Ubuntu 24.04, Install instruction for [GateMateA1-EVB](https://github.com/rlangoy/gatemateA1LiteXMigenSnipplets/blob/main/doc/litex_picorv32_gatemate_a1_e.md)
 
 ## Getting Started
 
