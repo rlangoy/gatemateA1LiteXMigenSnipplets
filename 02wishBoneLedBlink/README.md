@@ -23,7 +23,10 @@ The LED is mapped to **bit 0** at address **0x40000000**. Writing `0x1` turns th
 |                 |             |        |                           |
 | RemoteClient    |             |        | Wishbone bus              |
 |   wb.write()    |             |        v                           |
-|   wb.read()     |             |   WishboneLed (slave)              |
+|   wb.read()     |             |   Decoder (addr[26:30] == 0b0100) |
+|                 |             |        |                           |
+|                 |             |        v  0x40000000               |
+|                 |             |   WishboneLed (slave)              |
 |                 |             |     bit 0 -> LED                   |
 +-----------------+             +------------------------------------+
 ```
@@ -32,8 +35,9 @@ The LED is mapped to **bit 0** at address **0x40000000**. Writing `0x1` turns th
 
 | File | Description |
 |---|---|
-| `wishBoneBlink.py` | FPGA design: UART bridge + Wishbone LED peripheral |
+| `wishBoneBlink.py` | FPGA design: UART bridge + address-decoded Wishbone LED peripheral |
 | `ledControl.py` | Host-side script to turn the LED on and read back the register |
+| `test_address_decode.py` | Simulation testbench verifying address decoding |
 | `designspec.md` | Original design specification |
 
 ## Hardware Requirements
@@ -114,5 +118,16 @@ wb.close()
 ## How It Works
 
 - **UARTWishboneBridge** (`litex.soc.cores.uart`) instantiates an RS232 PHY and a protocol converter (`Stream2Wishbone`) that translates serial commands from `litex_server` into Wishbone bus transactions.
+- **wishbone.Decoder** routes bus transactions based on the address. The LED slave is mapped to the `0x40000000` region by checking the top 4 bits of the 30-bit word address (`addr[26:30] == 0b0100`). Writes to other addresses (e.g. `0x50000000`) are ignored.
 - **WishboneLed** is a minimal Wishbone slave that latches bit 0 on write and drives the active-low LED pin accordingly (`led_n = ~reg`).
-- The two are connected point-to-point on the Wishbone bus (no address decoder needed for a single slave).
+
+## Running Tests
+
+```bash
+python test_address_decode.py
+```
+
+This runs a Migen simulation that verifies:
+- Writes to `0x40000000` update the LED register
+- Writes to `0x50000000` and `0x00000000` are rejected
+- Read-back returns the correct value
