@@ -1,17 +1,14 @@
 from migen import *
-from migen.bus import wishbone
-from litex.soc.integration.soc import SoCMini, SoCRegion
-from litex.soc.integration.builder import Builder
-from  litex_boards.targets.olimex_gatemate_a1_evb import *
-#from litex_boards.platforms import colognechip_gatemate_evb
+from litex.soc.interconnect import wishbone
+from litex_boards.platforms import olimex_gatemate_a1_evb
 
-# create a led blinker module as a Wishbone peripheral
-class Blink(Module):
+# LED blinker module as a Wishbone slave peripheral
+class WishboneBlink(Module):
     def __init__(self, led):
-        #Create a wish bone interface
+        # Create a Wishbone slave interface
         self.bus = bus = wishbone.Interface()
 
-        #Connect the signal enableBlinking to  bit 0 of the implemented wishbone bus
+        # Register to hold the enableBlinking flag (bit 0 of wishbone data)
         enableBlinking = Signal()
 
         # Wishbone slave logic: handle writes and reads
@@ -26,42 +23,85 @@ class Blink(Module):
         ]
         self.comb += bus.dat_r.eq(enableBlinking)
 
+        # Free-running counter for blinking
         counter = Signal(26)
-
-        # synchronous assignement
         self.sync += counter.eq(counter + 1)
 
-        # combinatorial assignment
-        self.comb += If(enableBlinking  == 1,   # If the enableBlinking bit is set     : blink using counter bit
+        # LED control: blink when enabled, LED off when disabled
+        self.comb += If(enableBlinking,
             led.eq(counter[23])
         ).Else(
-            led.eq(1)                           # If the enableBlinking bit is not set : led_n=1 means LED off
+            led.eq(1)                   # led_n=1 means LED off (active low)
         )
 
-# SoC wrapping the Blink peripheral with a Wishbone address mapping
-class BlinkSoC(SoCMini):
+# Simple Wishbone master: writes enableBlinking based on button state
+class WishboneMaster(Module):
+    def __init__(self, btn):
+        # Create a Wishbone master interface
+        self.bus = bus = wishbone.Interface()
+
+        # Detect button press edge (active low button)
+        btn_d = Signal()
+        btn_rise = Signal()
+        btn_fall = Signal()
+        self.sync += btn_d.eq(btn)
+        self.comb += [
+            btn_fall.eq(btn_d & ~btn),   # button pressed  (1->0 transition)
+            btn_rise.eq(~btn_d & btn),   # button released (0->1 transition)
+        ]
+
+        # State machine to issue Wishbone writes on button edges
+        self.submodules.fsm = fsm = FSM(reset_state="IDLE")
+        fsm.act("IDLE",
+            If(btn_fall,
+                NextState("WRITE_ON")
+            ).Elif(btn_rise,
+                NextState("WRITE_OFF")
+            )
+        )
+        fsm.act("WRITE_ON",
+            bus.cyc.eq(1),
+            bus.stb.eq(1),
+            bus.we.eq(1),
+            bus.dat_w.eq(1),            # enable blinking
+            If(bus.ack,
+                NextState("IDLE")
+            )
+        )
+        fsm.act("WRITE_OFF",
+            bus.cyc.eq(1),
+            bus.stb.eq(1),
+            bus.we.eq(1),
+            bus.dat_w.eq(0),            # disable blinking
+            If(bus.ack,
+                NextState("IDLE")
+            )
+        )
+
+# Top-level module connecting master and slave via Wishbone bus
+class Top(Module):
     def __init__(self, platform):
-        SoCMini.__init__(self, platform, clk_freq=10e6)
-
-        # get led signal from our platform
+        # Get I/O signals from platform
         led = platform.request("user_led_n", 0)
+        btn = platform.request("user_btn_n", 0)
 
-        # create our Blink peripheral and map it at address 0x30000000
-        self.submodules.blink = Blink(led)
-        self.bus.add_slave("blink", self.blink.bus, region=SoCRegion(origin=0x30000000, size=0x1000))
+        # Instantiate Wishbone slave (LED blinker) and master (button controller)
+        self.submodules.blink  = blink  = WishboneBlink(led)
+        self.submodules.master = master = WishboneMaster(btn)
 
-# create/init  the development platform
+        # Connect master to slave
+        self.comb += master.bus.connect(blink.bus)
+
+# create/init the development platform
 platform = olimex_gatemate_a1_evb.Platform()
 
-# create the SoC
-soc = BlinkSoC(platform)
+# create the top module
+top = Top(platform)
 
-# get the build directory
-import os
-build_dir=os.getcwd()+"/build"
 # build the design
-builder = Builder(soc, output_dir=build_dir)
-builder.build()
+import os
+build_dir = os.path.join(os.getcwd(), "build")
+platform.build(top, build_dir=build_dir)
 
-#program the chip
-platform.create_programmer().load_bitstream(build_dir + "/gateware/top_00.cfg")
+# program the chip
+platform.create_programmer().load_bitstream(os.path.join(build_dir, "top_00.cfg"))
