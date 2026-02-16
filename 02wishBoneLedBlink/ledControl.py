@@ -13,7 +13,7 @@ wb = RemoteClient()
 wb.open()
 
 # Write 0x01 to address 0x40000000 — turns the LED on
-wb.write(0x50000000, 0x0)
+wb.write(0x40000000, 0x0)
 
 # Read back to verify
 value = wb.read(0x40000000)
