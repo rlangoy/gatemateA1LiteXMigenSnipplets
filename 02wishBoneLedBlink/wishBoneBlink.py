@@ -67,4 +67,15 @@ class Top(Module):
 
 
 platform = olimex_gatemate_a1_evb.Platform()
-platform.build(Top(platform), build_dir=os.path.join(os.getcwd(), "build"))
+
+# get the build directory
+import os
+build_dir=os.getcwd()+"/build"
+
+# build the defign
+platform.build(Top(platform), build_dir)
+
+#program the chip
+platform.create_programmer().load_bitstream(build_dir + "/top_00.cfg")
+
+
