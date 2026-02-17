@@ -28,6 +28,13 @@ BAUDRATE = 115200
 ADDR_LED_REGION = 0b0100
 
 
+#Create:
+#+-------------------------------------+
+#|   WishboneLed (Wishbone slave)      |
+#|     - Always ACKs every address     |
+#|     - Only writes reg at 0x40000000 |
+#|     - bit 0 -> LED                  |
+#+-------------------------------------+
 class WishboneLed(Module):
     """Wishbone slave with built-in address decoding.
 
@@ -37,8 +44,9 @@ class WishboneLed(Module):
 
     def __init__(self, led):
         self.bus = wishbone.Interface(data_width=32, adr_width=30)
-        led_reg = Signal()
-        addr_match = Signal()
+        
+        led_reg = Signal()      # Output signal from the wishbone
+        addr_match = Signal()   # True if 0x40000000 
 
         # Address decode: byte addr 0x40000000 = word addr 0x10000000
         self.comb += addr_match.eq(self.bus.adr[26:30] == ADDR_LED_REGION)
@@ -64,18 +72,37 @@ class WishboneLed(Module):
         ]
 
 
+
+
+# Create:
+#+------------------------------------+
+#| UARTWishboneBridge                 |
+#|   (Wishbone master)                |
+#|        |                           |
+#|        | Wishbone bus (direct)     |
+#|        v                           |
+#|   WishboneLed (slave)              |
+#+------------------------------------+
 class Top(Module):
     def __init__(self, platform):
+        
+        #Get the user I/O pin numbers from litex_boards.platforms.olimex_gatemate_a1_evb
         led = platform.request("user_led_n", 0)
+        
+        #Get the UART I/O pins numbers from litex_boards.platforms.olimex_gatemate_a1_evb
         serial = platform.request("serial")
 
+        # Create a USRT that is connected to the WishBoneBus
         # UART Wishbone bridge — host PC becomes bus master
         self.submodules.bridge = bridge = UARTWishboneBridge(
             pads=serial, clk_freq=CLK_FREQ, baudrate=BAUDRATE,
         )
 
+        # Connect the module led
         # LED peripheral — direct connection, address decoding is internal
+        # Create the WishboneLed module led_priph and add it to the submodules
         self.submodules.led = led_periph = WishboneLed(led)
+        #connect the WishboneLed module to the WishBoneBus
         self.comb += bridge.wishbone.connect(led_periph.bus)
 
 
