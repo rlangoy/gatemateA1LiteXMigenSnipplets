@@ -11,10 +11,10 @@ class Blink(Module):
         self.sync += counter.eq(counter + 1)
 
         # combinatorial assignment
-        self.comb += If(btn == 0,   # If the user-button is  pressed (btn=0): blink using counter bit
-            led.eq(counter[23])
-        ).Else(
-            led.eq(1)               # In the user-button is not pressed     : led_n=1 means LED off
+        self.comb += If(btn == 0,            # If the user-button is  pressed (btn=0): blink using counter bit
+                        led.eq(counter[23])  #   set led ("user_led_n", 0) =  counter-bit23 
+        ).Else(                              # If the user-button is not pressed
+            led.eq(1)                        #:  set led ("user_led_n", 0) = 1   ( turn LED off )
         )
 
 # create/init  the development platform
