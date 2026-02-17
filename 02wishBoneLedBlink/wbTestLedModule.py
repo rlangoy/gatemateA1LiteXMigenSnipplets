@@ -39,7 +39,7 @@ while(True):
 
    # Read back to verify
    value = wb.read(addr)
-   print(f"LED register = 0x{value:08x} (bit0={'ON' if value & 1 else 'OFF'})")
+   print(f"Readback the  register = 0x{value:08x} (bit0={'ON' if value & 1 else 'OFF'})")
 
    input("Press Enter to continue...")
    print(f" Write 0x00 to address 0x{addr:08x}  — No device attetched noting should happen - please verify")
@@ -47,7 +47,7 @@ while(True):
 
    # Read back to verify
    value = wb.read(addr)
-   print(f"LED register = 0x{value:08x} (bit0={'ON' if value & 1 else 'OFF'})")
+   print(f"Readback the = 0x{value:08x} (bit0={'ON' if value & 1 else 'OFF'})")
 
    input("Press Enter to continue...")
 
@@ -59,7 +59,7 @@ while(True):
 
    # Read back to verify
    value = wb.read(addr)
-   print(f"LED register = 0x{value:08x} (bit0={'ON' if value & 1 else 'OFF'})")
+   print(f"Readback the register = 0x{value:08x} (bit0={'ON' if value & 1 else 'OFF'})")
 
    input("Press Enter to continue...")
    print(f" Write 0x00 to address 0x{addr:08x}  — No device attetched noting should happen - please verify")
@@ -67,7 +67,7 @@ while(True):
 
    # Read back to verify
    value = wb.read(addr)
-   print(f"LED register = 0x{value:08x} (bit0={'ON' if value & 1 else 'OFF'})")
+   print(f"Readback the register = 0x{value:08x} (bit0={'ON' if value & 1 else 'OFF'})")
 
    input("Press Enter to continue...")
 
