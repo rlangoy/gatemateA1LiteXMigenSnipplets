@@ -21,13 +21,12 @@ The LED is mapped to **bit 0** at address **0x40000000**. Writing `0x1` turns th
 | litex_server    |<----------->| UARTWishboneBridge                 |
 |   (115200 baud) |  TX/RX      |   (Wishbone master)               |
 |                 |             |        |                           |
-| RemoteClient    |             |        | Wishbone bus              |
+| RemoteClient    |             |        | Wishbone bus (direct)     |
 |   wb.write()    |             |        v                           |
-|   wb.read()     |             |   Decoder (addr[26:30] == 0b0100) |
-|                 |             |        |                           |
-|                 |             |        v  0x40000000               |
-|                 |             |   WishboneLed (slave)              |
-|                 |             |     bit 0 -> LED                   |
+|   wb.read()     |             |   WishboneLed (slave)              |
+|                 |             |     - Always ACKs every address    |
+|                 |             |     - Only writes reg at 0x4000..  |
+|                 |             |     - bit 0 -> LED                 |
 +-----------------+             +------------------------------------+
 ```
 
@@ -118,8 +117,9 @@ wb.close()
 ## How It Works
 
 - **UARTWishboneBridge** (`litex.soc.cores.uart`) instantiates an RS232 PHY and a protocol converter (`Stream2Wishbone`) that translates serial commands from `litex_server` into Wishbone bus transactions.
-- **wishbone.Decoder** routes bus transactions based on the address. The LED slave is mapped to the `0x40000000` region by checking the top 4 bits of the 30-bit word address (`addr[26:30] == 0b0100`). Writes to other addresses (e.g. `0x50000000`) are ignored.
-- **WishboneLed** is a minimal Wishbone slave that latches bit 0 on write and drives the active-low LED pin accordingly (`led_n = ~reg`).
+- **WishboneLed** is a Wishbone slave with built-in address decoding. It **always ACKs every transaction** to prevent the `Stream2Wishbone` state machine from hanging on unmapped addresses (see [litex#82](https://github.com/enjoy-digital/litex/issues/82)). Only writes to the `0x40000000` region (`addr[26:30] == 0b0100`) update the LED register. Reads from other addresses return 0.
+- The slave drives the active-low LED pin accordingly (`led_n = ~reg`).
+- The bridge and slave are connected directly (no external Decoder needed).
 
 ## Running Tests
 
@@ -129,5 +129,6 @@ python test_address_decode.py
 
 This runs a Migen simulation that verifies:
 - Writes to `0x40000000` update the LED register
-- Writes to `0x50000000` and `0x00000000` are rejected
+- Writes to `0x50000000`, `0x20000000`, and `0x00000000` are ACKed but ignored
+- The bus never hangs on unmapped addresses
 - Read-back returns the correct value
