@@ -177,6 +177,19 @@ def run_test(dut):
     print(f"  {'PASS' if ok else 'FAIL'}")
     passed, failed = (passed + 1, failed) if ok else (passed, failed + 1)
 
+
+
+   # --- Test 8: Write 1 to correct address 0x40000001 ---
+    print("\n--- Test 1: Write 1 to 0x40000001 (correct address) ---")
+    acked = yield from wb_write(dut.master, 0x40000000, 0x1)
+    yield
+    led_val = yield dut.led
+    read_val, _ = yield from wb_read(dut.master, 0x40000001)
+    ok = read_val == 0 and  acked
+    print(f"  ACKed={acked}, Read back=0x{read_val:08x}, LED pin={led_val}")
+    print(f"  {'PASS' if ok else 'FAIL'}")
+    passed, failed = (passed + 1, failed) if ok else (passed, failed + 1)
+
     print(f"\n{'='*50}")
     print(f"Results: {passed} passed, {failed} failed")
 
