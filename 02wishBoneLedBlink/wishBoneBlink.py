@@ -52,19 +52,31 @@ class WishboneLed(Module):
         # convert 0x40000000 byte-addr to word address (0x40000000 >> 2) = 0x10000000
         #      Address decode: byte addr 0x40000000 = word addr 0x10000000
         LED_WORD_ADDR = 0x10000000  
-        self.comb += addr_match.eq(self.bus.adr == LED_WORD_ADDR)
+        self.comb += addr_match.eq(self.bus.adr == LED_WORD_ADDR) # addr_match = True if bus.adr= 0x40000000
 
-        # Always ACK every transaction — prevents bus hang on unmapped access
+        # Evaluaton and updation the block on the rising edge of the system clock
         self.sync += [
+            # WishBone bus, Default: deassert ACK every clock cycle (active for only one cycle)
             self.bus.ack.eq(0),
+        
+            # Wait for WishBone bus-ready (CYC and STB both asserted, ACK not yet given) 
+            # CYC (Cycle) indicates that a valid bus cycle is in progress.
+            # STB (Strobe) indicates that the master is presenting valid address and data on the bus 
             If(self.bus.cyc & self.bus.stb & ~self.bus.ack,
+                
+                # WishBone bus-ready    
+                # Respond that the HW is ready (to the bus master by asserting ACK for one cycle)
+                # Unmatched address → ACK anyway, no side effects ( avoid bus hang if user acces wrong address region )
                 self.bus.ack.eq(1),
+
+                # If this is a write transaction (WE asserted) and the bus-address matches 0x40000000
                 If(self.bus.we & addr_match,
+                    # Latch the least-significant bit of the write data bus into the LED register
                     led_reg.eq(self.bus.dat_w[0]),
                 ),
             ),
         ]
-
+        
         self.comb += [
             If(addr_match,
                 self.bus.dat_r.eq(led_reg),
