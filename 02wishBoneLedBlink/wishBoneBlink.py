@@ -49,7 +49,11 @@ class WishboneLed(Module):
         addr_match = Signal()   # True if 0x40000000 
 
         # Address decode: byte addr 0x40000000 = word addr 0x10000000
-        self.comb += addr_match.eq(self.bus.adr[26:30] == ADDR_LED_REGION)
+        # self.comb += addr_match.eq(self.bus.adr[26:30] == ADDR_LED_REGION)
+       
+        LED_WORD_ADDR = 0x10000000  # 0x40000000 >> 2
+        self.comb += addr_match.eq(self.bus.adr == LED_WORD_ADDR)
+
 
         # Always ACK every transaction — prevents bus hang on unmapped access
         self.sync += [
