@@ -10,7 +10,12 @@ This project demonstrates how to:
 2. Use LiteX's **UARTWishboneBridge** to expose the Wishbone bus to the host PC
 3. Control the peripheral from a **host-side Python script** using `RemoteClient`
 
-The LED is mapped to **bit 0** at address **0x40000400**. Writing `0x1` turns the LED on, writing `0x0` turns it off.
+Two direct-mapping variants exist, differing only in their LED address:
+
+| File | LED byte address | LED word address |
+|---|---|---|
+| `wishBoneBlink.py` | `0x40000000` | `0x10000000` |
+| `uartWishBoneDirectMapingLed.py` | `0x40000400` | `0x10000100` |
 
 ## Architecture
 
@@ -25,7 +30,8 @@ The LED is mapped to **bit 0** at address **0x40000400**. Writing `0x1` turns th
 |   wb.write()    |             |        v                           |
 |   wb.read()     |             |   WishboneLed (slave)              |
 |                 |             |     - Always ACKs every address    |
-|                 |             |     - Only writes reg at 0x4000..  |
+|                 |             |     - Only writes reg at mapped    |
+|                 |             |       address update LED           |
 |                 |             |     - bit 0 -> LED                 |
 +-----------------+             +------------------------------------+
 ```
@@ -34,10 +40,11 @@ The LED is mapped to **bit 0** at address **0x40000400**. Writing `0x1` turns th
 
 | File | Description |
 |---|---|
-| `uartWishBoneDirectMapingLed.py` | FPGA design: UART bridge + direct Wishbone address-decoded LED peripheral |
+| `wishBoneBlink.py` | FPGA design: UART bridge + direct Wishbone LED peripheral at `0x40000000` |
+| `uartWishBoneDirectMapingLed.py` | FPGA design: UART bridge + direct Wishbone LED peripheral at `0x40000400` |
 | `uartWishBoneCrsLed.py` | FPGA design: UART bridge + LiteX SoCMini/CSR-based LED peripheral |
-| `wbTestLedModule.py` | Host-side script to toggle the LED via RemoteClient |
-| `test_address_decode.py` | Simulation testbench verifying address decoding |
+| `wbTestLedModule.py` | Host-side interactive script to toggle the LED at `0x40000400` via RemoteClient |
+| `test_address_decode.py` | Simulation testbench verifying address decoding for `wishBoneBlink.py` (address `0x40000000`) |
 | `designspec.md` | Original design specification |
 
 ## Hardware Requirements
@@ -60,13 +67,27 @@ The LED is mapped to **bit 0** at address **0x40000400**. Writing `0x1` turns th
 
 ### 1. Build the bitstream
 
+**Option A** — `wishBoneBlink.py` (LED at `0x40000000`, outputs `build/top_00.cfg`):
+
+```bash
+python wishBoneBlink.py
+```
+
+**Option B** — `uartWishBoneDirectMapingLed.py` (LED at `0x40000400`, outputs `build/gateware/olimex_gatemate_a1_evb_00.cfg`):
+
 ```bash
 python uartWishBoneDirectMapingLed.py
 ```
 
-This runs Yosys synthesis and Cologne Chip place-and-route, producing `build/gateware/olimex_gatemate_a1_evb_00.cfg`.
-
 ### 2. Load the bitstream onto the FPGA
+
+For Option A:
+
+```bash
+openFPGALoader -c dirtyJtag build/top_00.cfg
+```
+
+For Option B:
 
 ```bash
 openFPGALoader -c dirtyJtag build/gateware/olimex_gatemate_a1_evb_00.cfg
@@ -86,10 +107,17 @@ Adjust `/dev/ttyACM0` to match your USB-UART adapter.
 python wbTestLedModule.py
 ```
 
-Expected output:
+This is an interactive loop. It writes to `0x40000400`, reads back the register, and waits for Enter between steps. It also tests that writing to an unmapped address (`0x40000004`) has no effect:
 
 ```
+ Write 0x01 to address 0x40000400  — turns the LED on - please verify
 LED register = 0x00000001 (bit0=ON)
+Press Enter to continue...
+Turn led off -- please verify
+LED register = 0x00000000 (bit0=OFF)
+Press Enter to continue...
+ Write 0x01 to address 0x40000004  — No device attached nothing should happen - please verify
+...
 ```
 
 ### Manual control via Python REPL
@@ -100,7 +128,7 @@ from litex import RemoteClient
 wb = RemoteClient()
 wb.open()
 
-wb.write(0x40000400, 0x1)   # LED on
+wb.write(0x40000400, 0x1)   # LED on  (use 0x40000000 if running wishBoneBlink.py)
 wb.write(0x40000400, 0x0)   # LED off
 
 value = wb.read(0x40000400)  # Read back register
@@ -111,14 +139,28 @@ wb.close()
 
 ## Register Map
 
+### `wishBoneBlink.py`
+
+| Address | Bit | R/W | Description |
+|---|---|---|---|
+| `0x40000000` | 0 | R/W | LED control (1 = on, 0 = off) |
+
+### `uartWishBoneDirectMapingLed.py`
+
 | Address | Bit | R/W | Description |
 |---|---|---|---|
 | `0x40000400` | 0 | R/W | LED control (1 = on, 0 = off) |
 
+### `uartWishBoneCrsLed.py` (CSR-based)
+
+| Address | Bit | R/W | Description |
+|---|---|---|---|
+| `0x40000400` | 0 | R/W | LED control via `led.control` CSR register |
+
 ## How It Works
 
 - **UARTWishboneBridge** (`litex.soc.cores.uart`) instantiates an RS232 PHY and a protocol converter (`Stream2Wishbone`) that translates serial commands from `litex_server` into Wishbone bus transactions.
-- **WishboneLed** is a Wishbone slave with built-in address decoding. It **always ACKs every transaction** to prevent the `Stream2Wishbone` state machine from hanging on unmapped addresses (see [litex#82](https://github.com/enjoy-digital/litex/issues/82)). Only writes to address `0x40000400` (word address `0x10000100`) update the LED register. Reads from other addresses return 0.
+- **WishboneLed** is a Wishbone slave with built-in address decoding. It **always ACKs every transaction** to prevent the `Stream2Wishbone` state machine from hanging on unmapped addresses (see [litex#82](https://github.com/enjoy-digital/litex/issues/82)). Only writes to the mapped address update the LED register. Reads from other addresses return 0.
 - The slave drives the active-low LED pin accordingly (`led_n = ~reg`).
 - The bridge and slave are connected directly (no external Decoder needed).
 
@@ -128,7 +170,11 @@ wb.close()
 python test_address_decode.py
 ```
 
-This runs a Migen simulation that verifies:
+This runs a Migen simulation for the `wishBoneBlink.py` design (LED at `0x40000000`) and verifies:
+
 - Writes to `0x40000000` update the LED register
-- The bus never hangs on unmapped addresses
+- Writes to other addresses (`0x50000000`, `0x20000000`, `0x00000000`, `0x40000004`) are ACKed but do not affect the LED
+- The bus never hangs on any address
 - Read-back returns the correct value
+
+A `test_address_decode.vcd` waveform file is generated for inspection in GTKWave.

@@ -30,6 +30,13 @@ CLK_FREQ = int(10e6)
 BAUDRATE = 115200
 
 
+# Create:
+#+--------------------------------------------+
+#|   LedPeripheral (AutoCSR peripheral)       |
+#|     - 1-bit CSR storage register           |
+#|     - "control" register at 0x40000400     |
+#|     - bit 0 -> LED (active low)            |
+#+--------------------------------------------+
 class LedPeripheral(Module, AutoCSR):
     """CSR-mapped LED peripheral. Bit 0 of the control register drives the LED."""
 
@@ -42,12 +49,20 @@ class LedPeripheral(Module, AutoCSR):
 
 
 
-#----------------
-# Top -  Connect the system
-#   - Initiatlize the system
-#   - Connect I/O
-#   - Connects components
-#----------------
+# Create:
+#+------------------------------------+
+#| SoCMini (Top)                      |
+#|                                    |
+#|  UARTWishboneBridge (bus master)   |
+#|        |                           |
+#|        | Wishbone bus              |
+#|        v                           |
+#|    CSR decoder                     |
+#|        |                           |
+#|        v                           |
+#|  LedPeripheral (CSR slave)         |
+#|    @ 0x40000400                    |
+#+------------------------------------+
 class Top(SoCMini):
     # Set CSR region base address to 0x40000000
     mem_map = {
