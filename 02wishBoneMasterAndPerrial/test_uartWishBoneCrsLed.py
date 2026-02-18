@@ -11,18 +11,22 @@ Tests that:
 
 from migen import *
 from litex.soc.interconnect import wishbone
+from uartWishBoneCrsLed import LedPeripheral
 
 ADDR_LED_UPPER = 0b0100
 
 
 class WishboneLed(Module):
-    """Wishbone slave with built-in address decoding."""
+    """Wishbone slave wrapping LedPeripheral from uartWishBoneCrsLed."""
 
     def __init__(self, led):
         self.bus = wishbone.Interface(data_width=32, adr_width=30)
-        led_reg = Signal()
-        addr_match = Signal()
 
+        # Instantiate the real LedPeripheral from uartWishBoneCrsLed.py.
+        # It drives: led.eq(~self.control.storage)
+        self.submodules.periph = LedPeripheral(led)
+
+        addr_match = Signal()
         self.comb += addr_match.eq(
             (self.bus.adr[26:30] == ADDR_LED_UPPER) &
             (self.bus.adr[0:26] == 0)
@@ -33,18 +37,17 @@ class WishboneLed(Module):
             If(self.bus.cyc & self.bus.stb & ~self.bus.ack,
                 self.bus.ack.eq(1),
                 If(self.bus.we & addr_match,
-                    led_reg.eq(self.bus.dat_w[0]),
+                    self.periph.control.storage.eq(self.bus.dat_w[0]),
                 ),
             ),
         ]
 
         self.comb += [
             If(addr_match,
-                self.bus.dat_r.eq(led_reg),
+                self.bus.dat_r.eq(self.periph.control.storage),
             ).Else(
                 self.bus.dat_r.eq(0),
             ),
-            led.eq(~led_reg),
         ]
 
 
