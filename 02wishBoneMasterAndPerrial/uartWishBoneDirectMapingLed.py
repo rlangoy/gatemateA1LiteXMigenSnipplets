@@ -3,11 +3,11 @@
 Wishbone LED blink — UART bridge with address-decoded LED peripheral.
 
 The host PC acts as bus master via UART Wishbone bridge.
-LED peripheral is mapped at 0x40000000 (bit 0 controls the LED).
+LED peripheral is mapped at 0x40000400 (bit 0 controls the LED).
 
 Address decoding is handled inside the slave: every transaction gets an ACK
 (preventing bus hangs per https://github.com/enjoy-digital/litex/issues/82),
-but only writes to the 0x40000000 region update the LED register.
+but only writes to the 0x40000400 region update the LED register.
 
 Build:  python wishBoneBlink.py
 Server: litex_server --uart --uart-port=/dev/ttyUSBx
@@ -32,7 +32,7 @@ ADDR_LED_REGION = 0b0100
 #+-------------------------------------+
 #|   WishboneLed (Wishbone slave)      |
 #|     - Always ACKs every address     |
-#|     - Only writes reg at 0x40000000 |
+#|     - Only writes reg at 0x40000400 |
 #|     - bit 0 -> LED                  |
 #+-------------------------------------+
 class WishboneLed(Module):
@@ -122,14 +122,22 @@ class Top(Module):
         #connect the WishboneLed module to the WishBoneBus
         self.comb += bridge.wishbone.connect(led_periph.bus)
 
+# ------------------
+# Build  The System 
+# ------------------
+def main():
 
-platform = olimex_gatemate_a1_evb.Platform()
+    platform = olimex_gatemate_a1_evb.Platform()
 
-# get the build directory
-build_dir = os.getcwd() + "/build"
+    # get the build directory
+    build_dir = os.getcwd() + "/build"
 
-# build the design
-platform.build(Top(platform), build_dir)
+    # build the design
+    platform.build(Top(platform), build_dir)
 
-# program the chip
-platform.create_programmer().load_bitstream(build_dir + "/top_00.cfg")
+    # program the chip
+    platform.create_programmer().load_bitstream(build_dir + "/top_00.cfg")
+    
+if __name__ == "__main__":
+    main()
+
