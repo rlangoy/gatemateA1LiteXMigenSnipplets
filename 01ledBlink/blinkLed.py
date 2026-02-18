@@ -34,17 +34,26 @@ class Blink(Module):
 # ------------------
 # Build The System
 # ------------------
+def main():    
+    import os
+    
+    # Initialize the platform with pin/IO definitions
+    platform = olimex_gatemate_a1_evb.Platform()
+    
+    # Get LED signal from platform
+    led = platform.request("user_led_n", 0)
 
-# Select dev-board to run the example
-platform = olimex_gatemate_a1_evb.Platform()
-#platform= colognechip_gatemate_evb.Platform()
+    # Instantiate top-level module
+    module = Blink(led)
 
-# Get LED signal from platform
-led = platform.request("user_led_n", 0)
+    # get the build directory
+    build_dir = os.getcwd() + "/build"
 
-# Instantiate top-level module
-module = Blink(led)
+    # Synthesize and place-and-route via the Cologne Chip toolchain
+    platform.build(module, build_dir)
 
-# — use absolute path to avoid LiteX build_dir CWD bug
-import os
-platform.build(module, build_dir=os.path.join(os.getcwd(), "build"))
+    # program the chip
+    platform.create_programmer().load_bitstream(build_dir + "/top_00.cfg")
+
+if __name__ == "__main__":
+    main()
