@@ -13,9 +13,6 @@ Register map:
   ctrl        : location 0 → 0x40000000
   led_control : location 1 → 0x40000400
 
-  Verify against build/csr.csv after building.
-  
-  Gatecount:    726       olimex_gatemate_a1_evb_00.v
 """
 
 import os
