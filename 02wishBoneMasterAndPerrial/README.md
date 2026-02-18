@@ -43,8 +43,8 @@ Two direct-mapping variants exist, differing only in their LED address:
 | `wishBoneBlink.py` | FPGA design: UART bridge + direct Wishbone LED peripheral at `0x40000000` |
 | `uartWishBoneDirectMapingLed.py` | FPGA design: UART bridge + direct Wishbone LED peripheral at `0x40000400` |
 | `uartWishBoneCrsLed.py` | FPGA design: UART bridge + LiteX SoCMini/CSR-based LED peripheral |
-| `wbTestLedModule.py` | Host-side interactive script to toggle the LED at `0x40000400` via RemoteClient |
-| `test_address_decode.py` | Simulation testbench verifying address decoding for `wishBoneBlink.py` (address `0x40000000`) |
+| `wishBoneUartDebugLedPeripheralModule.py` | Host-side interactive script to toggle the LED at `0x40000400` via RemoteClient |
+| `testBenchLedPeripheral.py` | Simulation testbench verifying address decoding for `uartWishBoneCrsLed.py` (address `0x40000400`) |
 | `designspec.md` | Original design specification |
 
 ## Hardware Requirements
@@ -104,7 +104,7 @@ Adjust `/dev/ttyACM0` to match your USB-UART adapter.
 ### 4. Control the LED
 
 ```bash
-python wbTestLedModule.py
+python wishBoneUartDebugLedPeripheralModule.py
 ```
 
 This is an interactive loop. It writes to `0x40000400`, reads back the register, and waits for Enter between steps. It also tests that writing to an unmapped address (`0x40000004`) has no effect:
@@ -167,13 +167,13 @@ wb.close()
 ## Running Tests
 
 ```bash
-python test_address_decode.py
+python testBenchLedPeripheral.py
 ```
 
-This runs a Migen simulation for the `wishBoneBlink.py` design (LED at `0x40000000`) and verifies:
+This runs a Migen simulation for the `uartWishBoneCrsLed.py` design (LED at `0x40000400`) and verifies:
 
-- Writes to `0x40000000` update the LED register
-- Writes to other addresses (`0x50000000`, `0x20000000`, `0x00000000`, `0x40000004`) are ACKed but do not affect the LED
+- Writes to `0x40000400` update the LED register
+- Writes to other addresses (`0x50000000`, `0x20000000`, `0x00000000`, `0x40000404`) are ACKed but do not affect the LED
 - The bus never hangs on any address
 - Read-back returns the correct value
 
