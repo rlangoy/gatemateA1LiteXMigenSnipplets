@@ -74,7 +74,7 @@ openFPGALoader -c dirtyJtag build/top_00.cfg
 ### 3. Start the LiteX UART server
 
 ```bash
-litex_server --uart --uart-port=/dev/ttyUSB0
+litex_server --uart --uart-port=/dev/ttyACM0 --debug
 ```
 
 Adjust `/dev/ttyUSB0` to match your USB-UART adapter.
@@ -129,6 +129,5 @@ python test_address_decode.py
 
 This runs a Migen simulation that verifies:
 - Writes to `0x40000000` update the LED register
-- Writes to `0x50000000`, `0x20000000`, and `0x00000000` are ACKed but ignored
 - The bus never hangs on unmapped addresses
 - Read-back returns the correct value

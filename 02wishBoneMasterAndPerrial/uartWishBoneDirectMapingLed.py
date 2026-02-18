@@ -39,7 +39,7 @@ class WishboneLed(Module):
     """Wishbone slave with built-in address decoding.
 
     Always ACKs every transaction to prevent bus hangs on unmapped addresses.
-    Only updates the LED register for writes to the 0x40000000 region.
+    Only updates the LED register for writes to the 0x40000400 address.
     """
 
     def __init__(self, led):
@@ -49,9 +49,9 @@ class WishboneLed(Module):
         addr_match = Signal()   # True if 0x40000000 
               
         # Wishbone (as used by LiteX) uses WORD addressing, not byte addressing.
-        # convert 0x40000000 byte-addr to word address (0x40000000 >> 2) = 0x10000000
+        # convert 0x40000400 byte-addr to word address (0x40000400 >> 2) = 0x10000100
         #      Address decode: byte addr 0x40000000 = word addr 0x10000000
-        LED_WORD_ADDR = 0x10000000  
+        LED_WORD_ADDR = 0x10000100  
         self.comb += addr_match.eq(self.bus.adr == LED_WORD_ADDR) # addr_match = True if bus.adr= 0x40000000
 
         # Evaluaton and updation the block on the rising edge of the system clock
@@ -64,13 +64,16 @@ class WishboneLed(Module):
             # STB (Strobe) indicates that the master is presenting valid address and data on the bus 
             If(self.bus.cyc & self.bus.stb & ~self.bus.ack,
                 
-                # WishBone bus-ready    
+                # WishBone bus-ready                    
                 # Respond that the HW is ready (to the bus master by asserting ACK for one cycle)
-                # Unmatched address → ACK anyway, no side effects ( avoid bus hang if user acces wrong address region )
-                self.bus.ack.eq(1),
+                self.bus.ack.eq(1),                
+                
+                # :: Warning ::
+                # Unmatched address → is ACK and so bus would hang  not hang if user acces wrong address region
+                #   Problem We ACK addresses that does not belog to us (might cause timing issues)
 
-                # If this is a write transaction (WE asserted) and the bus-address matches 0x40000000
-                If(self.bus.we & addr_match,
+                # If this is a write transaction (WE asserted) and the bus-address matches 0x40000400
+                If(self.bus.we & addr_match,                  
                     # Latch the least-significant bit of the write data bus into the LED register
                     led_reg.eq(self.bus.dat_w[0]),
                 ),
@@ -85,7 +88,6 @@ class WishboneLed(Module):
             ),
             led.eq(~led_reg),  # active-low: reg=1 → LED on
         ]
-
 
 
 

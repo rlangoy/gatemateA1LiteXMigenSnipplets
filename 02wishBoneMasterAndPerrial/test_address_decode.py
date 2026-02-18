@@ -12,7 +12,7 @@ Tests that:
 from migen import *
 from litex.soc.interconnect import wishbone
 
-ADDR_LED_REGION = 0b0100
+ADDR_LED_UPPER = 0b0100
 
 
 class WishboneLed(Module):
@@ -23,7 +23,10 @@ class WishboneLed(Module):
         led_reg = Signal()
         addr_match = Signal()
 
-        self.comb += addr_match.eq(self.bus.adr[26:30] == ADDR_LED_REGION)
+        self.comb += addr_match.eq(
+            (self.bus.adr[26:30] == ADDR_LED_UPPER) &
+            (self.bus.adr[0:26] == 0)
+        )
 
         self.sync += [
             self.bus.ack.eq(0),
@@ -179,13 +182,13 @@ def run_test(dut):
 
 
 
-   # --- Test 8: Write 1 to correct address 0x40000001 ---
-    print("\n--- Test 1: Write 1 to 0x40000001 (correct address) ---")
-    acked = yield from wb_write(dut.master, 0x40000000, 0x1)
+    # --- Test 8: Read from adjacent address 0x40000004 (next word, should not match) ---
+    print("\n--- Test 8: Read from 0x40000004 (adjacent word, should return 0) ---")
+    acked = yield from wb_write(dut.master, 0x40000004, 0x1)
     yield
     led_val = yield dut.led
-    read_val, _ = yield from wb_read(dut.master, 0x40000001)
-    ok = read_val == 0 and  acked
+    read_val, _ = yield from wb_read(dut.master, 0x40000004)
+    ok = read_val == 0 and acked
     print(f"  ACKed={acked}, Read back=0x{read_val:08x}, LED pin={led_val}")
     print(f"  {'PASS' if ok else 'FAIL'}")
     passed, failed = (passed + 1, failed) if ok else (passed, failed + 1)

@@ -41,6 +41,13 @@ class LedPeripheral(Module, AutoCSR):
         self.comb += led.eq(~self.control.storage)
 
 
+
+#----------------
+# Top -  Connect the system
+#   - Initiatlize the system
+#   - Connect I/O
+#   - Connects components
+#----------------
 class Top(SoCMini):
     # Set CSR region base address to 0x40000000
     mem_map = {
@@ -79,12 +86,21 @@ class Top(SoCMini):
         self.submodules.led = LedPeripheral(led_pin)
 
 
-platform = olimex_gatemate_a1_evb.Platform()
-soc = Top(platform)
+# ------------------
+# Build  The System 
+# ------------------
+def main():
 
-# Use Builder to generate csr.csv and other exports
-builder = Builder(soc, output_dir="build", compile_gateware=True, compile_software=False)
-builder.build()
+	#Select dev-board to run the example
+	platform = olimex_gatemate_a1_evb.Platform()
+	soc = Top(platform)
 
-# Program the chip
-platform.create_programmer().load_bitstream("build/gateware/top_00.cfg")
+	# Use Builder to generate csr.csv and other exports
+	builder = Builder(soc, output_dir="build", compile_gateware=True, compile_software=False)
+	builder.build()
+
+	# Program the chip
+	platform.create_programmer().load_bitstream("build/gateware/olimex_gatemate_a1_evb_00.cfg")
+
+if __name__ == "__main__":
+    main()
