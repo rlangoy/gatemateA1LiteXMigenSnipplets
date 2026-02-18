@@ -32,6 +32,30 @@ A minimal LED blinker demonstrating the basics of Migen/LiteX development. This 
 
 See the [00ledBlink README](./00ledBlink/README.md) for detailed build and programming instructions.
 
+### 2. 01btnLedBlink
+
+An LED blinker controlled by a user button. The LED toggles every ~1.2 seconds only while the button is held.
+
+**Location**: [`01btnLedBlink/`](./01btnLedBlink/)
+
+See the [01btnLedBlink README](./01btnLedBlink/README.md) for details.
+
+### 3. 02wishBoneMasterAndPerrial
+
+Demonstrates controlling an LED from a host PC over UART using a Wishbone bus. Shows how to:
+- Create a Wishbone slave peripheral (a 1-bit LED register)
+- Use LiteX's `UARTWishboneBridge` to expose the Wishbone bus
+- Control the peripheral from host-side Python using `RemoteClient`
+
+**Features:**
+- LED mapped to bit 0 at address `0x40000400`
+- Two FPGA design variants: direct address mapping and CSR-based
+- Simulation testbench for address decoding verification
+
+**Location**: [`02wishBoneMasterAndPerrial/`](./02wishBoneMasterAndPerrial/)
+
+See the [02wishBoneMasterAndPerrial README](./02wishBoneMasterAndPerrial/README.md) for details.
+
 ## Prerequisites
 Install: <br> 
 - LiteX <br>
@@ -55,10 +79,19 @@ Install: <br>
 
 ```
 .
-├── README.md          # This file
-└── 00ledBlink/        # LED blinker example
-    ├── README.md      # Detailed project documentation
-    └── blinkLed.py    # Migen/LiteX source code
+├── README.md                        # This file
+├── 00ledBlink/                      # LED blinker example
+│   ├── README.md
+│   └── blinkLed.py
+├── 01btnLedBlink/                   # Button-controlled LED blinker
+│   ├── README.md
+│   └── btnLedBlink.py
+└── 02wishBoneMasterAndPerrial/      # Wishbone LED control via UART
+    ├── README.md
+    ├── uartWishBoneDirectMapingLed.py
+    ├── uartWishBoneCrsLed.py
+    ├── wbTestLedModule.py
+    └── test_address_decode.py
 ```
 
 ## Contributing
