@@ -87,27 +87,19 @@ Two direct-mapping variants exist, differing only in their LED address:
 
 ### 1. Build the bitstream
 
-**Option A** — `wishBoneBlink.py` (LED at `0x40000000`, outputs `build/top_00.cfg`):
-
-```bash
-python wishBoneBlink.py
-```
-
-**Option B** — `uartWishBoneDirectMapingLed.py` (LED at `0x40000400`, outputs `build/gateware/olimex_gatemate_a1_evb_00.cfg`):
+**Option A** — `uartWishBoneDirectMapingLed.py` (direct Wishbone mapping, LED at `0x40000400`):
 
 ```bash
 python uartWishBoneDirectMapingLed.py
 ```
 
-### 2. Load the bitstream onto the FPGA
-
-For Option A:
+**Option B** — `uartWishBoneCrsLed.py` (CSR-based, LED at `0x40000400`):
 
 ```bash
-openFPGALoader -c dirtyJtag build/top_00.cfg
+python uartWishBoneCrsLed.py
 ```
 
-For Option B:
+### 2. Load the bitstream onto the FPGA
 
 ```bash
 openFPGALoader -c dirtyJtag build/gateware/olimex_gatemate_a1_evb_00.cfg
@@ -148,7 +140,7 @@ from litex import RemoteClient
 wb = RemoteClient()
 wb.open()
 
-wb.write(0x40000400, 0x1)   # LED on  (use 0x40000000 if running wishBoneBlink.py)
+wb.write(0x40000400, 0x1)   # LED on
 wb.write(0x40000400, 0x0)   # LED off
 
 value = wb.read(0x40000400)  # Read back register
@@ -158,12 +150,6 @@ wb.close()
 ```
 
 ## Register Map
-
-### `wishBoneBlink.py`
-
-| Address | Bit | R/W | Description |
-|---|---|---|---|
-| `0x40000000` | 0 | R/W | LED control (1 = on, 0 = off) |
 
 ### `uartWishBoneDirectMapingLed.py`
 

@@ -90,8 +90,8 @@ Install: <br>
     ├── README.md
     ├── uartWishBoneDirectMapingLed.py
     ├── uartWishBoneCrsLed.py
-    ├── wbTestLedModule.py
-    └── test_address_decode.py
+    ├── wishBoneUartDebugLedPeripheralModule.py
+    └── testBenchLedPeripheral.py
 ```
 
 ## Contributing
