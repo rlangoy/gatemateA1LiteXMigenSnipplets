@@ -15,30 +15,41 @@ The examples in this repository target the **GateMateA1-EVB** development board:
 
 ## Projects
 
-### 1. 00ledBlink
+### 1. 00btn2Led
 
-A minimal LED blinker demonstrating the basics of Migen/LiteX development. This project shows how to:
-- Create a simple counter-based LED blinker
+A minimal button-to-LED example demonstrating pure combinatorial logic with Migen/LiteX. This project shows how to:
+- Create a Migen module with combinatorial logic
+- Wire a button directly to an LED with no clock or state
 - Use the Migen Module class
+- Access platform resources (buttons and LEDs)
+- Build and program the FPGA
+
+**Features:**
+- Pure combinatorial logic - no clock domain required
+- Button directly controls LED state (active low)
+- LED mirrors button instantly
+- Complete build and programming instructions
+
+**Location**: [`00btn2Led/`](./00btn2Led/)
+
+See the [00btn2Led README](./00btn2Led/README.md) for detailed build and programming instructions.
+
+### 2. 01ledBlink
+
+A minimal LED blinker demonstrating the basics of Migen/LiteX development with clocked logic. This project shows how to:
+- Create a simple counter-based LED blinker
+- Use the Migen Module class with synchronous logic
 - Access platform resources (LEDs)
 - Build and program the FPGA
 
 **Features:**
 - 26-bit counter increments on the 10 MHz clock
-- Bit 23 toggles the user LED approximately every ~1.2 seconds
+- Bit 23 toggles the user LED approximately every ~0.84 seconds
 - Complete build and programming instructions
 
-**Location**: [`00ledBlink/`](./00ledBlink/)
+**Location**: [`01ledBlink/`](./01ledBlink/)
 
-See the [00ledBlink README](./00ledBlink/README.md) for detailed build and programming instructions.
-
-### 2. 01btnLedBlink
-
-An LED blinker controlled by a user button. The LED toggles every ~1.2 seconds only while the button is held.
-
-**Location**: [`01btnLedBlink/`](./01btnLedBlink/)
-
-See the [01btnLedBlink README](./01btnLedBlink/README.md) for details.
+See the [01ledBlink README](./01ledBlink/README.md) for details.
 
 ### 3. 02wishBoneMasterAndPerrial
 
@@ -71,7 +82,7 @@ Install: <br>
    cd gatemateA1LiteXMigenSnipplets
    ```
 
-2. Navigate to a project directory (e.g., `ledBlink`)
+2. Navigate to a project directory (e.g., `00btn2Led`, `01ledBlink`, or `02wishBoneMasterAndPerrial`)
 
 3. Follow the project-specific README for build and programming instructions
 
@@ -80,18 +91,21 @@ Install: <br>
 ```
 .
 ├── README.md                        # This file
-├── 00ledBlink/                      # LED blinker example
+├── 00btn2Led/                       # Button to LED (combinatorial logic)
+│   ├── README.md
+│   └── btn2Led.py
+├── 01ledBlink/                      # LED blinker example
 │   ├── README.md
 │   └── blinkLed.py
-├── 01btnLedBlink/                   # Button-controlled LED blinker
+├── 02wishBoneMasterAndPerrial/      # Wishbone LED control via UART
 │   ├── README.md
-│   └── btnLedBlink.py
-└── 02wishBoneMasterAndPerrial/      # Wishbone LED control via UART
-    ├── README.md
-    ├── uartWishBoneDirectMapingLed.py
-    ├── uartWishBoneCrsLed.py
-    ├── wishBoneUartDebugLedPeripheralModule.py
-    └── testBenchLedPeripheral.py
+│   ├── designspec.md
+│   ├── uartWishBoneDirectMapingLed.py
+│   ├── uartWishBoneCrsLed.py
+│   ├── wishBoneUartDebugLedPeripheralModule.py
+│   └── testBenchLedPeripheral.py
+├── doc/                             # Documentation
+└── litexPatch/                      # LiteX patches
 ```
 
 ## Contributing
