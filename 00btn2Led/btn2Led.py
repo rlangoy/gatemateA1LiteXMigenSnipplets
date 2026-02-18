@@ -1,11 +1,25 @@
+"""
+Button → LED — minimal LiteX/Migen design for the GateMate A1 EVB.
+
+Pressing the button drives the LED directly (combinational, active-low).
+
+Build:   python btn2Led.py
+Program: openFPGALoader --cable dirtyJtag build/top_00.cfg
+
+Note:
+  The _io list and Platform class below can be replaced by importing
+  the upstream board definition:
+      from litex_boards.platforms import olimex_gatemate_a1_evb
+"""
+
 from migen import *
 from litex.build.generic_platform import Pins, Misc, Subsignal
 from litex.build.colognechip.platform import CologneChipPlatform
 
+
 # ---------------------------------------------------------------------
-# Minimal GateMateA1-evb platform ()
-# The _io and Platform Class sound be obmitteed by including the library
-#        from litex_boards.platforms import olimex_gatemate_a1_evb
+# Minimal GateMate A1 EVB platform definition
+# (superseded by litex_boards.platforms.olimex_gatemate_a1_evb)
 # ---------------------------------------------------------------------
 _io = [
     ("clk0",       0, Pins("IO_SB_A8")),
@@ -19,35 +33,45 @@ class Platform(CologneChipPlatform):
 
     def __init__(self):
         CologneChipPlatform.__init__(self, "CCGM1A1", _io, toolchain="colognechip")
-# -------------------------------------------------
-# Button → LED module
-# -------------------------------------------------
+
+
+# Create:
+#+----------------------------------+
+#|   Btn2Led (combinational module) |
+#|     - btn_n -> led_n (direct)    |
+#|     - button pressed  → LED on   |
+#|     - button released → LED off  |
+#+----------------------------------+
 class Btn2Led(Module):
+    """Combinational button-to-LED module. Drives LED directly from button signal."""
+
     def __init__(self, led, btn):
+        # Both signals are active-low: pass btn straight through to led
         self.comb += led.eq(btn)
+
 
 # ------------------
 # Build The System
 # ------------------
 def main():
-    import os,subprocess
-    
-    # Initaialize the FPGA and I/O defs
+    import os, subprocess
+
+    # Initialize the platform with pin/IO definitions
     platform = Platform()
-    
-    # Get the signals from the platform config 
+
+    # Request named signals from the platform configuration
     led = platform.request("user_led_n", 0)
     btn = platform.request("user_btn_n", 0)
 
-    #Create the Module Blink
+    # Instantiate the top-level module
     module = Btn2Led(led, btn)
 
-    # Build the design
+    # Synthesize and place-and-route via the Cologne Chip toolchain
     build_dir = os.getcwd() + "/build"
     platform.build(module, build_dir, run=True)
-  
-    # program the chip
-    subprocess.run([ "openFPGALoader", "--cable", "dirtyJtag", "build/top_00.cfg" ], check=True)
-    
+
+    # Program the bitstream onto the FPGA
+    subprocess.run(["openFPGALoader", "--cable", "dirtyJtag", "build/top_00.cfg"], check=True)
+
 if __name__ == "__main__":
     main()
