@@ -1,30 +1,49 @@
+
+"""
+LED blink — Migen module that blinks an LED using a free-running counter.
+
+Counter bit 23 drives the LED, producing a visible blink rate
+at 10 MHz clock (2^23 ≈ 8.4 M cycles → ~0.84 s half-period).
+
+Build:  python blinkLed.py
+"""
+
 from migen import *
 from  litex_boards.targets.olimex_gatemate_a1_evb import *
-#from litex_boards.platforms import colognechip_gatemate_evb 
 
-# create a led blinker module
+
+# Create:
+#+-----------------------------+
+#|   Blink (Module)            |
+#|     - 26-bit free counter   |
+#|     - bit 23 → LED          |
+#+-----------------------------+
 class Blink(Module):
+    """LED blink module. Bit 23 of a free-running counter drives the LED."""
+
     def __init__(self, led):
         counter = Signal(26)
 
-        # combinatorial assignment
+        # Combinatorial assignment: wire counter bit 23 directly to the LED pin
         self.comb += led.eq(counter[23])
 
-        # synchronous assignement
+        # Synchronous assignment: increment counter every clock cycle
         self.sync += counter.eq(counter + 1)
 
-# create our platform
+
+# ------------------
+# Build The System
+# ------------------
+
+# Select dev-board to run the example
 platform = olimex_gatemate_a1_evb.Platform()
 #platform= colognechip_gatemate_evb.Platform()
 
-# get led signal from our platform
+# Get LED signal from platform
 led = platform.request("user_led_n", 0)
 
-# create our main module
+# Instantiate top-level module
 module = Blink(led)
-
-# build the design
-# platform.build(module)
 
 # — use absolute path to avoid LiteX build_dir CWD bug
 import os
