@@ -10,7 +10,7 @@ This project demonstrates how to:
 2. Use LiteX's **UARTWishboneBridge** to expose the Wishbone bus to the host PC
 3. Control the peripheral from a **host-side Python script** using `RemoteClient`
 
-The LED is mapped to **bit 0** at address **0x40000000**. Writing `0x1` turns the LED on, writing `0x0` turns it off.
+The LED is mapped to **bit 0** at address **0x40000400**. Writing `0x1` turns the LED on, writing `0x0` turns it off.
 
 ## Architecture
 
@@ -34,8 +34,9 @@ The LED is mapped to **bit 0** at address **0x40000000**. Writing `0x1` turns th
 
 | File | Description |
 |---|---|
-| `wishBoneBlink.py` | FPGA design: UART bridge + address-decoded Wishbone LED peripheral |
-| `ledControl.py` | Host-side script to turn the LED on and read back the register |
+| `uartWishBoneDirectMapingLed.py` | FPGA design: UART bridge + direct Wishbone address-decoded LED peripheral |
+| `uartWishBoneCrsLed.py` | FPGA design: UART bridge + LiteX SoCMini/CSR-based LED peripheral |
+| `wbTestLedModule.py` | Host-side script to toggle the LED via RemoteClient |
 | `test_address_decode.py` | Simulation testbench verifying address decoding |
 | `designspec.md` | Original design specification |
 
@@ -60,15 +61,15 @@ The LED is mapped to **bit 0** at address **0x40000000**. Writing `0x1` turns th
 ### 1. Build the bitstream
 
 ```bash
-python wishBoneBlink.py
+python uartWishBoneDirectMapingLed.py
 ```
 
-This runs Yosys synthesis and Cologne Chip place-and-route, producing `build/top_00.cfg`.
+This runs Yosys synthesis and Cologne Chip place-and-route, producing `build/gateware/olimex_gatemate_a1_evb_00.cfg`.
 
 ### 2. Load the bitstream onto the FPGA
 
 ```bash
-openFPGALoader -c dirtyJtag build/top_00.cfg
+openFPGALoader -c dirtyJtag build/gateware/olimex_gatemate_a1_evb_00.cfg
 ```
 
 ### 3. Start the LiteX UART server
@@ -77,12 +78,12 @@ openFPGALoader -c dirtyJtag build/top_00.cfg
 litex_server --uart --uart-port=/dev/ttyACM0 --debug
 ```
 
-Adjust `/dev/ttyUSB0` to match your USB-UART adapter.
+Adjust `/dev/ttyACM0` to match your USB-UART adapter.
 
 ### 4. Control the LED
 
 ```bash
-python ledControl.py
+python wbTestLedModule.py
 ```
 
 Expected output:
@@ -99,10 +100,10 @@ from litex import RemoteClient
 wb = RemoteClient()
 wb.open()
 
-wb.write(0x40000000, 0x1)   # LED on
-wb.write(0x40000000, 0x0)   # LED off
+wb.write(0x40000400, 0x1)   # LED on
+wb.write(0x40000400, 0x0)   # LED off
 
-value = wb.read(0x40000000)  # Read back register
+value = wb.read(0x40000400)  # Read back register
 print(f"LED = {'ON' if value & 1 else 'OFF'}")
 
 wb.close()
@@ -112,12 +113,12 @@ wb.close()
 
 | Address | Bit | R/W | Description |
 |---|---|---|---|
-| `0x40000000` | 0 | R/W | LED control (1 = on, 0 = off) |
+| `0x40000400` | 0 | R/W | LED control (1 = on, 0 = off) |
 
 ## How It Works
 
 - **UARTWishboneBridge** (`litex.soc.cores.uart`) instantiates an RS232 PHY and a protocol converter (`Stream2Wishbone`) that translates serial commands from `litex_server` into Wishbone bus transactions.
-- **WishboneLed** is a Wishbone slave with built-in address decoding. It **always ACKs every transaction** to prevent the `Stream2Wishbone` state machine from hanging on unmapped addresses (see [litex#82](https://github.com/enjoy-digital/litex/issues/82)). Only writes to the `0x40000000` region (`addr[26:30] == 0b0100`) update the LED register. Reads from other addresses return 0.
+- **WishboneLed** is a Wishbone slave with built-in address decoding. It **always ACKs every transaction** to prevent the `Stream2Wishbone` state machine from hanging on unmapped addresses (see [litex#82](https://github.com/enjoy-digital/litex/issues/82)). Only writes to address `0x40000400` (word address `0x10000100`) update the LED register. Reads from other addresses return 0.
 - The slave drives the active-low LED pin accordingly (`led_n = ~reg`).
 - The bridge and slave are connected directly (no external Decoder needed).
 
