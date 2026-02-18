@@ -14,10 +14,11 @@ Two direct-mapping variants exist, differing only in their LED address:
 
 | File | LED byte address | LED word address |
 |---|---|---|
-| `wishBoneBlink.py` | `0x40000000` | `0x10000000` |
 | `uartWishBoneDirectMapingLed.py` | `0x40000400` | `0x10000100` |
 
 ## Architecture
+
+### `uartWishBoneDirectMapingLed.py`
 
 ```
  Host PC                         FPGA (GateMate A1)
@@ -36,11 +37,30 @@ Two direct-mapping variants exist, differing only in their LED address:
 +-----------------+             +------------------------------------+
 ```
 
+### `uartWishBoneCrsLed.py`
+
+```
+ Host PC                         FPGA (GateMate A1)
++-----------------+             +------------------------------------+
+|                 |   UART      |                                    |
+| litex_server    |<----------->| UARTWishboneBridge                 |
+|   (115200 baud) |  TX/RX      |   (Wishbone master)               |
+|                 |             |        |                           |
+| RemoteClient    |             |        | Wishbone bus              |
+|   wb.write()    |             |        v                           |
+|   wb.read()     |             |   CSR Decoder (SoCMini)            |
+|                 |             |        |                           |
+|                 |             |        v                           |
+|                 |             |   LedPeripheral (CSR slave)        |
+|                 |             |     - control register @ 0x40000400|
+|                 |             |     - bit 0 -> LED                 |
++-----------------+             +------------------------------------+
+```
+
 ## Files
 
 | File | Description |
 |---|---|
-| `wishBoneBlink.py` | FPGA design: UART bridge + direct Wishbone LED peripheral at `0x40000000` |
 | `uartWishBoneDirectMapingLed.py` | FPGA design: UART bridge + direct Wishbone LED peripheral at `0x40000400` |
 | `uartWishBoneCrsLed.py` | FPGA design: UART bridge + LiteX SoCMini/CSR-based LED peripheral |
 | `wishBoneUartDebugLedPeripheralModule.py` | Host-side interactive script to toggle the LED at `0x40000400` via RemoteClient |
