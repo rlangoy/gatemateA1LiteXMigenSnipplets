@@ -61,9 +61,13 @@ class CRC32Peripheral(Module, AutoCSR):
     """
 
     def __init__(self, platform):
-        # data CSR: write[7:0] = data byte in, read[31:0] = checksum out
+        # data : CRS Address CRS_MAP + Offset = 0x40000800 + 0 (first registered CRS)
+        # data : CSR write[7:0] = data byte in, read[31:0] = checksum out
+        # if the bus writes data to the address 0x40000800 self.data is automaticaly updated
         self.data = CSR(32, name="data")
+        # reset_ctrl CRS :Address CRS_MAP + Offset = 0x40000800 + 4 (second registered CRS)     
         # reset_ctrl CSR: writing any value resets the CRC accumulator to 0xFFFFFFFF
+        # if the bus writes data to the address 0x40000804 self.reset_ctrl is automaticaly updated
         self.reset_ctrl = CSRStorage(32, name="reset_ctrl", reset=0)
 
         # Internal signals — reset values applied automatically on system reset
@@ -73,6 +77,8 @@ class CRC32Peripheral(Module, AutoCSR):
 
         # Instantiate the VHDL crc entity (hdl/crc.vhdl)
         platform.add_source(os.path.join(os.path.dirname(__file__), "hdl/crc.v"))
+        
+        # Connect the verilog signals to this
         self.specials += Instance("crc",
             i_crcIn  = crc_in,
             i_data   = self.data.r[0:8],   # lower 8 bits written by host (c.r = bus dat_w)
@@ -82,10 +88,10 @@ class CRC32Peripheral(Module, AutoCSR):
         # Reset takes priority: writing reset_ctrl restores accumulator to 0xFFFFFFFF.
         # On each host data write (data.re fires): feed crcOut back as next crcIn (accumulation).
         self.sync += [
-            If(self.reset_ctrl.re,
+            If(self.reset_ctrl.re,    # Writing to 0x40000804 triggers "register enable" (write strobe) for reset_ctrl.re
                 crc_in.eq(0xFFFFFFFF),
                 out_buf.eq(0xFFFFFFFF),
-            ).Elif(self.data.re,
+            ).Elif(self.data.re,      # Writing to 0x400008040 triggers "register enable" (write strobe) for data.re
                 crc_in.eq(crc_out),
                 out_buf.eq(crc_out),
             )
