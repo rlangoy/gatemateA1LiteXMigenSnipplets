@@ -67,6 +67,24 @@ Demonstrates controlling an LED from a host PC over UART using a Wishbone bus. S
 
 See the [02wishBoneMasterAndPerrial README](./02wishBoneMasterAndPerrial/README.md) for details.
 
+### 4. 03wishBoneCsrHdl
+
+Demonstrates wrapping an HDL module (VHDL or Verilog) as a Migen black-box and connecting it to the Wishbone bus using LiteX CSR registers. Implements a CRC32 peripheral backed by a generated HDL step entity. Shows how to:
+- Wrap a VHDL/Verilog entity as a Migen `Instance` (black-box)
+- Build a CSR-mapped peripheral exposing hardware logic via two 32-bit registers
+- Use LiteX's `UARTWishboneBridge` and `RemoteClient` for host-side control
+- Synthesise VHDL sources with Yosys via the GHDL plugin
+
+**Features:**
+- CRC32 accumulator conforming to CRC-32/ISO-HDLC (PKZIP standard)
+- Two FPGA design variants: Verilog black-box (`wishBoneCrsCrc32Verilog.py`) and VHDL black-box (`wishBoneCrsCrc32Vhdl.py`)
+- Host-side hardware validation script and simulation testbench
+- One-time GHDL Yosys plugin setup for synthesising VHDL (no root access required)
+
+**Location**: [`03wishBoneCsrHdl/`](./03wishBoneCsrHdl/)
+
+See the [03wishBoneCsrHdl README](./03wishBoneCsrHdl/README.md) for details.
+
 ## Prerequisites
 Install: <br> 
 - LiteX <br>
@@ -82,7 +100,7 @@ Install: <br>
    cd gatemateA1LiteXMigenSnipplets
    ```
 
-2. Navigate to a project directory (e.g., `00btn2Led`, `01ledBlink`, or `02wishBoneMasterAndPerrial`)
+2. Navigate to a project directory (e.g., `00btn2Led`, `01ledBlink`, `02wishBoneMasterAndPerrial`, or `03wishBoneCsrHdl`)
 
 3. Follow the project-specific README for build and programming instructions
 
@@ -104,6 +122,17 @@ Install: <br>
 │   ├── uartWishBoneCrsLed.py
 │   ├── wishBoneUartDebugLedPeripheralModule.py
 │   └── testBenchLedPeripheral.py
+├── 03wishBoneCsrHdl/                # CRC32 peripheral via HDL black-box and CSR
+│   ├── README.md
+│   ├── wishBoneCrsCrc32Verilog.py   # FPGA design (Verilog black-box)
+│   ├── wishBoneCrsCrc32Vhdl.py      # FPGA design (VHDL black-box + GHDL plugin)
+│   ├── wishBoneUartDebugCRC32PeripheralModule.py  # Host-side validation
+│   ├── testBenchCrc32Peripheral.py  # Simulation testbench
+│   ├── hdl/
+│   │   ├── crc.vhdl                 # Generated VHDL CRC32 step entity
+│   │   └── crc.v                    # Generated Verilog CRC32 step module
+│   └── tbLib/
+│       └── crcLib.py                # Python reference CRC32 implementation
 ├── doc/                             # Documentation
 └── litexPatch/                      # LiteX patches
 ```
