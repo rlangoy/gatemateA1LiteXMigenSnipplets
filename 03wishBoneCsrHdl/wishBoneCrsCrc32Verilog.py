@@ -1,0 +1,169 @@
+
+
+"""
+CRC32 peripheral — LiteX SoCMini with UART bridge and CSR-mapped CRC32 peripheral.
+
+The host PC acts as bus master via UART Wishbone bridge.
+The CRC32 peripheral accumulates bytes written via CSR and exposes the
+running CRC32 checksum at the same address.
+
+The CRC32 step logic is implemented in VHDL (hdl/crc.vhdl),
+instantiated as a black-box from Migen.
+
+The accumulator resets to 0xFFFFFFFF on the internal SoC system reset.
+
+Build:  python wishBoneCrsCrc32Verilog.py
+Server: litex_server --uart --uart-port=/dev/ttyACM0
+
+Register map:
+  Address = csr_base (mem_map) + csr_location (csr_map) × csr_paging
+  ctrl       : location 0 → 0x40000000
+  crc32_data      : location 2 → 0x40000800  (32-bit rw)
+                      write : lower 8 bits = data byte fed into CRC32 accumulator
+                      read  : 32-bit running CRC32 checksum (inverted accumulator)
+  crc32_reset_ctrl: location 2 → 0x40000804  (32-bit w)
+                      write : any value → sets the CRC accumulator to 0xFFFFFFFF (reset state)
+
+"""
+
+import os
+
+from migen import *
+from litex.soc.integration.soc_core import SoCMini
+from litex.soc.integration.builder import Builder
+from litex.soc.interconnect.csr import AutoCSR, CSR ,CSRStorage
+from litex_boards.platforms import olimex_gatemate_a1_evb
+
+CLK_FREQ = int(10e6)
+BAUDRATE = 115200
+
+# Create:
+#+--------------------------------------------+
+#|   CRC32Peripheral (AutoCSR peripheral)     |
+#|     @ 0x40000800                           |
+#|     Single 32-bit CSR register:            |
+#|       write [7:0] → feed byte into CRC32   |
+#|       read  [31:0] → running CRC32 checksum|
+#|     Accumulator resets on system reset     |
+#+--------------------------------------------+
+class CRC32Peripheral(Module, AutoCSR):
+    """CSR-mapped CRC32 peripheral.
+
+    Two registers within location slot 2:
+      crc32_data       @ 0x40000800 (32-bit rw)
+        write : lower 8 bits are fed into the CRC32 accumulator
+        read  : 32-bit running CRC32 checksum (final XOR / bit-inverted accumulator)
+      crc32_reset_ctrl @ 0x40000804 (32-bit w)
+        write : any value → resets the accumulator to 0xFFFFFFFF
+
+    The accumulator initialises to 0xFFFFFFFF on system reset.
+    The CRC32 step is computed by the VHDL entity in hdl/crc.vhdl.
+    """
+
+    def __init__(self, platform):
+        # data CSR: write[7:0] = data byte in, read[31:0] = checksum out
+        self.data = CSR(32, name="data")
+        # reset_ctrl CSR: writing any value resets the CRC accumulator to 0xFFFFFFFF
+        self.reset_ctrl = CSRStorage(32, name="reset_ctrl", reset=0)
+
+        # Internal signals — reset values applied automatically on system reset
+        crc_in  = Signal(32, reset=0xFFFFFFFF)  # Accumulated CRC; CRC32 init = 0xFFFFFFFF
+        crc_out = Signal(32)                     # Combinatorial output from VHDL crc entity
+        out_buf = Signal(32, reset=0xFFFFFFFF)   # Registered checksum; reset matches crc_in
+
+        # Instantiate the VHDL crc entity (hdl/crc.vhdl)
+        platform.add_source(os.path.join(os.path.dirname(__file__), "hdl/crc.v"))
+        self.specials += Instance("crc",
+            i_crcIn  = crc_in,
+            i_data   = self.data.r[0:8],   # lower 8 bits written by host (c.r = bus dat_w)
+            o_crcOut = crc_out,
+        )
+
+        # Reset takes priority: writing reset_ctrl restores accumulator to 0xFFFFFFFF.
+        # On each host data write (data.re fires): feed crcOut back as next crcIn (accumulation).
+        self.sync += [
+            If(self.reset_ctrl.re,
+                crc_in.eq(0xFFFFFFFF),
+                out_buf.eq(0xFFFFFFFF),
+            ).Elif(self.data.re,
+                crc_in.eq(crc_out),
+                out_buf.eq(crc_out),
+            )
+        ]
+
+        # Read path: c.w is what the host reads — invert out_buf for CRC32 final XOR step
+        self.comb += self.data.w.eq(~out_buf)
+
+
+
+# Create:
+#+------------------------------------+
+#| SoCMini (Top)                      |
+#|                                    |
+#|  UARTWishboneBridge (bus master)   |
+#|        |                           |
+#|        | Wishbone bus              |
+#|        v                           |
+#|    CSR decoder                     |
+#|        |                           |
+#|        v                           |
+#|  CRC32Peripheral (CSR slave)         |
+#|    @ 0x40000800                    |
+#+------------------------------------+
+class Top(SoCMini):
+    # Set CSR region base address to 0x40000000
+    mem_map = {
+        **SoCMini.mem_map,
+        "csr": 0x40000000,
+    }
+
+    # Explicitly assign CSR location slots per peripheral
+    # Address = 0x40000000 + location × 0x400
+    csr_map = {
+        "ctrl": 0,   # 0x40000000
+        "crc32":  2, # 0x40000800
+    }
+
+    def __init__(self, platform):
+        # Initialize SoCMini with UART Wishbone bridge as the bus master.
+        SoCMini.__init__(
+            self,
+            platform,
+            clk_freq=CLK_FREQ,
+            uart_name="crossover",
+            csr_address_width=14,
+            csr_paging=0x400,
+        )
+
+        # UART-to-Wishbone bridge — host PC becomes bus master
+        from litex.soc.cores.uart import UARTWishboneBridge
+        serial = platform.request("serial")
+        self.submodules.bridge = UARTWishboneBridge(
+            pads=serial, clk_freq=CLK_FREQ, baudrate=BAUDRATE,
+        )
+        self.bus.add_master(name="bridge", master=self.bridge.wishbone)
+
+        
+        # CRC32 peripheral — auto-registered as CSR peripheral via AutoCSR
+        self.submodules.crc32 = CRC32Peripheral(self.platform)
+
+
+# ------------------
+# Build  The System 
+# ------------------
+def main():
+
+	#Select dev-board to run the example
+	platform = olimex_gatemate_a1_evb.Platform()
+	soc = Top(platform)
+
+	# Use Builder to generate csr.csv and other exports
+	builder = Builder(soc, output_dir="build", compile_gateware=True, compile_software=False)
+	builder.build()
+
+	# Program the chip
+	platform.create_programmer().load_bitstream("build/gateware/olimex_gatemate_a1_evb_00.cfg")
+
+if __name__ == "__main__":
+    main()
+
