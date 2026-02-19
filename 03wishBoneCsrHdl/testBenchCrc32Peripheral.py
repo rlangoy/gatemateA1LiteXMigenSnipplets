@@ -223,19 +223,20 @@ def run_test(dut):
     # Test 2: Single byte 0x31 ('1') — read and write share same address
     # ------------------------------------------------------------------
     print("\n--- Test 2: Single byte 0x31 at 0x40000800 ---")
-    yield from wb_write(dut.master, ADDR_DATA, 0x31)
+    yield from wb_write(dut.master, ADDR_DATA, 0x31 & 0xFF)
     yield                                          # let sync latch out_buf
     val = yield from wb_read(dut.master, ADDR_DATA)
     check("checksum after 0x31", val, ref_checksum([0x31]))
 
     # ------------------------------------------------------------------
     # Test 3: Known CRC32 vector — "123456789" = 0xCBF43926
-    # Reset accumulator via system reset, then feed all 9 bytes
+    # Reset accumulator via system reset, then feed all 9 bytes.
+    # Each byte is masked to 8 bits before writing.
     # ------------------------------------------------------------------
     print('\n--- Test 3: CRC32("123456789") = 0xCBF43926 ---')
     yield from sys_reset(dut)
     for byte in b"123456789":
-        yield from wb_write(dut.master, ADDR_DATA, byte)
+        yield from wb_write(dut.master, ADDR_DATA, byte & 0xFF)
         yield
     val = yield from wb_read(dut.master, ADDR_DATA)
     check('CRC32("123456789")', val, 0xCBF43926)
@@ -255,11 +256,22 @@ def run_test(dut):
     yield from sys_reset(dut)
     ref_crc = 0xFFFFFFFF
     for byte in b"\xDE\xAD\xBE\xEF":
-        yield from wb_write(dut.master, ADDR_DATA, byte)
+        yield from wb_write(dut.master, ADDR_DATA, byte & 0xFF)
         yield
         ref_crc = crc32_ref(ref_crc, byte)
         val = yield from wb_read(dut.master, ADDR_DATA)
         check(f"  after byte 0x{byte:02x}", val, (~ref_crc) & 0xFFFFFFFF)
+
+    # ------------------------------------------------------------------
+    # Test 6: Upper bits [31:8] in a write must not affect the CRC.
+    # Write 0xDEADBE31 and verify the result equals writing 0x31 alone.
+    # ------------------------------------------------------------------
+    print("\n--- Test 6: Upper bits [31:8] ignored — 0xDEADBE31 treated as 0x31 ---")
+    yield from sys_reset(dut)
+    yield from wb_write(dut.master, ADDR_DATA, 0xDEADBE31)   # upper 24 bits set
+    yield
+    val = yield from wb_read(dut.master, ADDR_DATA)
+    check("0xDEADBE31 masked to 0x31", val, ref_checksum([0x31]))
 
     # ------------------------------------------------------------------
     # Summary
