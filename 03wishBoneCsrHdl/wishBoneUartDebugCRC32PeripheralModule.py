@@ -5,6 +5,13 @@ wb.open()
 
 print("Testing the CRC32Peripherial module 0x40000800 ---")
 # Feed bytes into the CRC32 accumulator (only lower 8 bits are used)
+print("\n---  Clear the CRC32 Acumulator---\n")
+print("\n---  write byte 0x1 at 0x40000804 ---\n")
+wb.write(0x40000804, 0x1)   # byte '1'
+value = wb.read(0x40000804)
+expectedValue=0x0
+print(f"Readback Result value x{value:08x} " )
+
 
 print("\n--- Test 1: write byte 0x31 at 0x40000800 ---\n")
 wb.write(0x40000800, 0x31)   # byte '1'
@@ -26,7 +33,7 @@ if(value!=expectedValue):
 else:
     print(" - Value correct\n")
 
-print("\n--- Test 2: write byte 0x33 at 0x40000800 ---\n")
+print("\n--- Test 3: write byte 0x33 at 0x40000800 ---\n")
 wb.write(0x40000800, 0x33)   # byte '3'
 value = wb.read(0x40000800)
 expectedValue=0x884863D2
@@ -37,5 +44,23 @@ else:
     print(" - Value correct\n")
 
 
+# Feed bytes into the CRC32 accumulator (only lower 8 bits are used)
+print("\n---  Test 4: Clear the CRC32 Acumulator---\n")
+print("\n---  write byte 0x1 at 0x40000804 ---\n")
+wb.write(0x40000804, 0x1)   # byte '1'
+value = wb.read(0x40000804)
+expectedValue=0x0
+print(f"Readback Result value x{value:08x} " )
+
+
+print("\n--- Test 5: write byte 0x31 at 0x40000800 ---\n")
+wb.write(0x40000800, 0x31)   # byte '1'
+value = wb.read(0x40000800)
+expectedValue=0x83DCEFB7
+print(f"Readback Result value x{value:08x} " )
+if(value!=expectedValue):
+    print(f"Failed ! Expected value x{expectedValue:08x} \n")
+else:
+    print(" - Value correct\n")
 
 wb.close()
