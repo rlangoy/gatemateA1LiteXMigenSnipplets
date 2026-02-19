@@ -1,15 +1,15 @@
 # 03 - CRC32 Peripheral via HDL Black-Box and Wishbone CSR
-The CRC32 module confirms to the standard..
+
+Demonstrates how to connect an HDL module (VHDL/Verilog) to the Wishbone bus using LiteX CSR registers on the Olimex GateMate A1 EVB.
+The CRC32 module confirms to the standard:
 ```
-CRC-32/ISO-HDLC
 CRC-32
+CRC-32/ISO-HDLC
 CRC-32/ADCCP
 CRC-32/V-42
 CRC-32/XZ
 PKZIP
 ```
-
-Demonstrates how to connect an HDL module (VHDL/Verilog) to the Wishbone bus using LiteX CSR registers on the Olimex GateMate A1 EVB.
 
 ## Overview
 
