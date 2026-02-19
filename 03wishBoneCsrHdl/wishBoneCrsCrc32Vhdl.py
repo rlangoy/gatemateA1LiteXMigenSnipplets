@@ -13,14 +13,16 @@ instantiated as a black-box from Migen.
 The accumulator resets to 0xFFFFFFFF on the internal SoC system reset.
 
 Build:  python wishBoneCrsCrc32Vhdl.py
-Server: litex_server --uart --uart-port=/dev/ttyUSBx
+Server: litex_server --uart --uart-port=/dev/ttyACM0
 
 Register map:
   Address = csr_base (mem_map) + csr_location (csr_map) × csr_paging
   ctrl       : location 0 → 0x40000000
-  crc32_data : location 2 → 0x40000800  (32-bit rw)
-                 write : lower 8 bits = data byte fed into CRC32 accumulator
-                 read  : 32-bit running CRC32 checksum (inverted accumulator)
+  crc32_data      : location 2 → 0x40000800  (32-bit rw)
+                      write : lower 8 bits = data byte fed into CRC32 accumulator
+                      read  : 32-bit running CRC32 checksum (inverted accumulator)
+  crc32_reset_ctrl: location 2 → 0x40000804  (32-bit w)
+                      write : any value → sets the CRC accumulator to 0xFFFFFFFF (reset state)
 
 """
 
@@ -32,7 +34,7 @@ from shutil import which
 from migen import *
 from litex.soc.integration.soc_core import SoCMini
 from litex.soc.integration.builder import Builder
-from litex.soc.interconnect.csr import AutoCSR, CSR
+from litex.soc.interconnect.csr import AutoCSR, CSR, CSRStorage
 from litex_boards.platforms import olimex_gatemate_a1_evb
 from litex.build.colognechip.colognechip import CologneChipToolchain
 
@@ -100,17 +102,22 @@ BAUDRATE = 115200
 class CRC32Peripheral(Module, AutoCSR):
     """CSR-mapped CRC32 peripheral.
 
-    Single register (crc32_data @ 0x40000800):
-      write : lower 8 bits are fed into the CRC32 accumulator
-      read  : 32-bit running CRC32 checksum (final XOR / bit-inverted accumulator)
+    Two registers within location slot 2:
+      crc32_data       @ 0x40000800 (32-bit rw)
+        write : lower 8 bits are fed into the CRC32 accumulator
+        read  : 32-bit running CRC32 checksum (final XOR / bit-inverted accumulator)
+      crc32_reset_ctrl @ 0x40000804 (32-bit w)
+        write : any value → resets the accumulator to 0xFFFFFFFF
 
     The accumulator initialises to 0xFFFFFFFF on system reset.
     The CRC32 step is computed by the VHDL entity in hdl/crc.vhdl.
     """
 
     def __init__(self, platform):
-        # Single CSR: write[7:0] = data byte in, read[31:0] = checksum out
+        # data CSR: write[7:0] = data byte in, read[31:0] = checksum out
         self.data = CSR(32, name="data")
+        # reset_ctrl CSR: writing any value resets the CRC accumulator to 0xFFFFFFFF
+        self.reset_ctrl = CSRStorage(32, name="reset_ctrl", reset=0)
 
         # Internal signals — reset values applied automatically on system reset
         crc_in  = Signal(32, reset=0xFFFFFFFF)  # Accumulated CRC; CRC32 init = 0xFFFFFFFF
@@ -125,9 +132,13 @@ class CRC32Peripheral(Module, AutoCSR):
             o_crcOut = crc_out,
         )
 
-        # On each host write (c.re fires): feed crcOut back as next crcIn (accumulation)
+        # Reset takes priority: writing reset_ctrl restores accumulator to 0xFFFFFFFF.
+        # On each host data write (data.re fires): feed crcOut back as next crcIn (accumulation).
         self.sync += [
-            If(self.data.re,
+            If(self.reset_ctrl.re,
+                crc_in.eq(0xFFFFFFFF),
+                out_buf.eq(0xFFFFFFFF),
+            ).Elif(self.data.re,
                 crc_in.eq(crc_out),
                 out_buf.eq(crc_out),
             )
