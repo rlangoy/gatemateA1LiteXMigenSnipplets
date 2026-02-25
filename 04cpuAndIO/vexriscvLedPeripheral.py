@@ -24,16 +24,27 @@ class LedPeripheral(Module, AutoCSR):
 # -------------------------------------------------
 class MySoC(BaseSoC):
     def __init__(self, **kwargs):
+        #kwargs.setdefault("cpu_type", "picorv32")
         kwargs.setdefault("cpu_type", "vexriscv")
-        kwargs.setdefault("uart_baudrate", 115200)
-        kwargs.setdefault("integrated_rom_size", 0x8000)  # 32KB BIOS ROM at CPU reset address 0x00000000
+        #kwargs.setdefault("uart_baudrate", 115200)
+        #kwargs.setdefault("uart_baudrate", 115200 )
+#        kwargs.setdefault("sys-clk-freq", 1000000 ) #1MHz
 
+        kwargs.setdefault("with-uartbone", "true")
+        kwargs.setdefault("with-uartbone", "true")
+        #kwargs.setdefault("uart_fifo_depth", 4)  # Depth of 128 reduces the likleihood of eronious output on slower terminals
+
+        #Adds self.patform
         BaseSoC.__init__(self,
             with_led_chaser=False,     # Disable chaser so we can claim user_led_n ourselves
             **kwargs
         )
 
+
         platform = self.platform
+
+         # Remove IO region
+        #self.bus.regions.pop("io0", None)
 
         # Request physical LED from platform (active-low: _n suffix)
         led = platform.request("user_led_n", 0)
