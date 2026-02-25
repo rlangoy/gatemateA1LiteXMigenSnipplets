@@ -19,7 +19,7 @@
 from litex_boards.platforms import olimex_gatemate_a1_evb
 
 # Path to the bitstream produced by a previous build (e.g. pico32RvLedPeripheral.py)
-BITSTREAM = "build/olimex_gatemate_a1_evb/gateware/olimex_gatemate_a1_evb_00.cfg.bit"
+BITSTREAM = "build/gateware/olimex_gatemate_a1_evb_00.cfg.bit"
 
 def main():
     platform = olimex_gatemate_a1_evb.Platform()   # board definition, no build triggered
