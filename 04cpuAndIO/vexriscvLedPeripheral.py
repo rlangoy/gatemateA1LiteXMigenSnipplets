@@ -30,8 +30,8 @@ class MySoC(BaseSoC):
         #kwargs.setdefault("uart_baudrate", 115200 )
 #        kwargs.setdefault("sys-clk-freq", 1000000 ) #1MHz
 
-        kwargs.setdefault("with-uartbone", "true")
-        kwargs.setdefault("with-uartbone", "true")
+        #kwargs.setdefault("with-uartbone", "true")
+        #kwargs.setdefault("with-uartbone", "true")
         #kwargs.setdefault("uart_fifo_depth", 4)  # Depth of 128 reduces the likleihood of eronious output on slower terminals
 
         #Adds self.patform
