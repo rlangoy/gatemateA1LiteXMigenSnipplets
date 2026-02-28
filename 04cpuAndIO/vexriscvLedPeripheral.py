@@ -26,20 +26,12 @@ class MySoC(BaseSoC):
     def __init__(self, **kwargs):
         #kwargs.setdefault("cpu_type", "picorv32")
         kwargs.setdefault("cpu_type", "vexriscv")
-        #kwargs.setdefault("uart_baudrate", 115200)
-        #kwargs.setdefault("uart_baudrate", 115200 )
-#        kwargs.setdefault("sys-clk-freq", 1000000 ) #1MHz
-
-        kwargs.setdefault("with-uartbone", "true")
-        kwargs.setdefault("with-uartbone", "true")
-        #kwargs.setdefault("uart_fifo_depth", 4)  # Depth of 128 reduces the likleihood of eronious output on slower terminals
-
+        kwargs.setdefault("integrated_rom_size", 0x8000)  # 32KB BIOS ROM at CPU reset address 0x00000000
         #Adds self.patform
         BaseSoC.__init__(self,
             with_led_chaser=False,     # Disable chaser so we can claim user_led_n ourselves
             **kwargs
         )
-
 
         platform = self.platform
 
@@ -68,9 +60,9 @@ def main():
     builder = Builder(soc, output_dir="build", compile_gateware=True, compile_software=True)
     builder.build()
 
-    # Flash bitstream to FPGA SRAM via dirtyJtag
+    # Flash bitstream to FPGA via dirtyJtag
     prog = soc.platform.create_programmer()
-    prog.load_bitstream(builder.get_bitstream_filename(mode="sram"))
+    prog.load_bitstream(builder.get_bitstream_filename())
 
 
 if __name__ == "__main__":
