@@ -10,9 +10,11 @@ This repository contains practical examples and code snippets for working with t
 
 The examples in this repository target the **GateMateA1-EVB** development board:
 - **Board**: [OLIMEX GateMateA1-EVB](https://github.com/OLIMEX/GateMateA1-EVB) (Open Hardware)
+- **DirtyJtag** :  [OLIMEX GateMateA1-EVB/SOFTWARE/dirtyJtag](https://github.com/f948a5fa-bdbf-4866-954f-c14a4e46591c)
 - **FPGA**: Cologne Chip CCGM1A1
 - **Clock**: 10 MHz on-board oscillator
 
+Its important to use this version of DirtyJtag (else you might experience echo problems when using a prosessor-design with BIOS)
 ## Projects
 
 ### 1. 00btn2Led
