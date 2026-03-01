@@ -8,7 +8,7 @@ from litex.soc.integration.soc_core import soc_core_args, soc_core_argdict
 from litex.soc.interconnect.csr import AutoCSR, CSRStorage
 import argparse
 
-from uart_tx_hardened import make_uart_tx_hardened
+from uart_tx_hardened import makeSocUartTxHardened
 
 
 # -------------------------------------------------
@@ -23,7 +23,7 @@ class LedPeripheral(Module, AutoCSR):
 # -------------------------------------------------
 # Custom SoC
 # -------------------------------------------------
-BaseSocUartTxHardened = make_uart_tx_hardened(BaseSoC)
+BaseSocUartTxHardened = makeSocUartTxHardened(BaseSoC)
 class MySoC(BaseSocUartTxHardened):  # BaseSocUartTxHardened overrides add_uart() to use RS232PHYPatched
     def __init__(self, **kwargs):
         kwargs.setdefault("cpu_type", "vexriscv")

@@ -1,15 +1,17 @@
+"""
+RS232 timing-patched UART PHY for LiteX.
+
+Improves first-byte TX robustness by enforcing explicit bit-time staging
+and an optional pre-idle guard before the START bit. 
+Drop-in replacement for the stock LiteX RS232PHY 
+Usage: replace BaseSoc width SocUartTxHardened (by calling makeSocUartTxHardened) .
+"""
 from migen import *
 from migen.genlib.record import Record
 from migen.genlib.cdc import MultiReg
 
 from litex.gen import LiteXModule
 from litex.soc.interconnect import stream
-
-# -------------------------------------------------
-# RS232 timing patch (inlined from uart_timing_patch.py)
-# Goal: improve first-byte TX robustness by enforcing explicit bit-time staging
-# and optional pre-idle guard before START bit.
-# -------------------------------------------------
 
 RS232_IDLE  = 1
 RS232_START = 0
@@ -160,10 +162,10 @@ class RS232PHYPatched(LiteXModule):
 
 
 # -------------------------------------------------
-# SoC mixin factory
+# Return the an extendex BaseSoC (BaseSocUartTxHardened) object.
+# Class overrides add_uart() , so that the RS232PHYPatched is used instead of the stock RS232PHY.
 # -------------------------------------------------
-
-def make_uart_tx_hardened(BaseSoC):
+def makeSocUartTxHardened(BaseSoC):
     from litex.soc.cores.uart import UART
 
     class BaseSocUartTxHardened(BaseSoC):
