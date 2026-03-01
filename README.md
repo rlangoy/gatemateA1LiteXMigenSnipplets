@@ -69,25 +69,23 @@ Demonstrates controlling an LED from a host PC over UART using a Wishbone bus. S
 
 See the [02wishBoneMasterAndPerrial README](./02wishBoneMasterAndPerrial/README.md) for details.
 
-### 5. 04cpuAndIO
+### 4. 02wishBoneLedBlink
 
-A full LiteX RiscV SoC on the GateMate A1 EVB with a patched UART TX path that fixes first-byte reliability issues seen with some USB-UART bridges. Shows how to:
-- Replace the standard RS232PHY with `RS232PHYPatched` using a **factory/mixin pattern** (`make_uart_tx_hardened`)
-- Hook into `BaseSoC` via **Python MRO** — the patch is applied transparently during `BaseSoC.__init__`
-- Add a **CSR-mapped LED peripheral** controllable from C firmware running on the CPU
-- Use `LiteXArgumentParser` to expose the full set of target, logging, and builder options
+A minimal **LiteX SoCMini** (no CPU) with a UART Wishbone bridge and a CSR-mapped LED peripheral. The host PC acts as bus master via `litex_server`. Shows how to:
+- Build a no-CPU SoC using `SoCMini` with `UARTWishboneBridge` as the bus master
+- Create a CSR-mapped LED peripheral with `AutoCSR` and `CSRStorage`
+- Control hardware registers from a host Python script using `RemoteClient`
 
 **Features:**
-- Drop-in replacement for `python3 -m litex_boards.targets.olimex_gatemate_a1_evb` with all original options preserved (video, ethernet, SDCard, flash)
-- Guard idle bit-times before the UART START bit eliminate first-byte corruption
-- VexRiscV variant (`vexriscvLedPeripheral.py`) with CSR-mapped LED peripheral
-- `programChipOnly.py` utility to flash a pre-built bitstream without re-running synthesis
+- LED control register at `0x40000400` (1-bit CSR, R/W)
+- Single-file design: builds and loads the bitstream when run directly
+- No CPU or BIOS required — host PC drives the bus over UART
 
-**Location**: [`04cpuAndIO/`](./04cpuAndIO/)
+**Location**: [`02wishBoneLedBlink/`](./02wishBoneLedBlink/)
 
-See the [04cpuAndIO README](./04cpuAndIO/README.md) for details.
+See the [02wishBoneLedBlink README](./02wishBoneLedBlink/README.md) for details.
 
-### 4. 03wishBoneCsrHdl
+### 5. 03wishBoneCsrHdl
 
 Demonstrates wrapping an HDL module (VHDL or Verilog) as a Migen black-box and connecting it to the Wishbone bus using LiteX CSR registers. Implements a CRC32 peripheral backed by a generated HDL step entity. Shows how to:
 - Wrap a VHDL/Verilog entity as a Migen `Instance` (black-box)
@@ -105,6 +103,24 @@ Demonstrates wrapping an HDL module (VHDL or Verilog) as a Migen black-box and c
 
 See the [03wishBoneCsrHdl README](./03wishBoneCsrHdl/README.md) for details.
 
+### 6. 04cpuAndIO
+
+A full LiteX RiscV SoC on the GateMate A1 EVB with a patched UART TX path that fixes first-byte reliability issues seen with some USB-UART bridges. Shows how to:
+- Replace the standard RS232PHY with `RS232PHYPatched` using a **factory/mixin pattern** (`make_uart_tx_hardened`)
+- Hook into `BaseSoC` via **Python MRO** — the patch is applied transparently during `BaseSoC.__init__`
+- Add a **CSR-mapped LED peripheral** controllable from C firmware running on the CPU
+- Use `LiteXArgumentParser` to expose the full set of target, logging, and builder options
+
+**Features:**
+- Drop-in replacement for `python3 -m litex_boards.targets.olimex_gatemate_a1_evb` with all original options preserved (video, ethernet, SDCard, flash)
+- Guard idle bit-times before the UART START bit eliminate first-byte corruption
+- VexRiscV variant (`vexriscvLedPeripheral.py`) with CSR-mapped LED peripheral
+- `programChipOnly.py` utility to flash a pre-built bitstream without re-running synthesis
+
+**Location**: [`04cpuAndIO/`](./04cpuAndIO/)
+
+See the [04cpuAndIO README](./04cpuAndIO/README.md) for details.
+
 ## Prerequisites
 Install: <br> 
 - LiteX <br>
@@ -120,7 +136,7 @@ Install: <br>
    cd gatemateA1LiteXMigenSnipplets
    ```
 
-2. Navigate to a project directory (e.g., `00btn2Led`, `01ledBlink`, `02wishBoneMasterAndPerrial`, `03wishBoneCsrHdl`, or `04cpuAndIO`)
+2. Navigate to a project directory (e.g., `00btn2Led`, `01ledBlink`, `02wishBoneMasterAndPerrial`, `02wishBoneLedBlink`, `03wishBoneCsrHdl`, or `04cpuAndIO`)
 
 3. Follow the project-specific README for build and programming instructions
 
@@ -142,6 +158,9 @@ Install: <br>
 │   ├── uartWishBoneCrsLed.py
 │   ├── wishBoneUartDebugLedPeripheralModule.py
 │   └── testBenchLedPeripheral.py
+├── 02wishBoneLedBlink/              # SoCMini + UART bridge + CSR LED (no CPU)
+│   ├── README.md
+│   └── socMiniUartWishBoneCrsLed.py
 ├── 03wishBoneCsrHdl/                # CRC32 peripheral via HDL black-box and CSR
 │   ├── README.md
 │   ├── wishBoneCrsCrc32Verilog.py   # FPGA design (Verilog black-box)
