@@ -69,22 +69,6 @@ Demonstrates controlling an LED from a host PC over UART using a Wishbone bus. S
 
 See the [02wishBoneMasterAndPerrial README](./02wishBoneMasterAndPerrial/README.md) for details.
 
-### 4. 02wishBoneLedBlink
-
-A minimal **LiteX SoCMini** (no CPU) with a UART Wishbone bridge and a CSR-mapped LED peripheral. The host PC acts as bus master via `litex_server`. Shows how to:
-- Build a no-CPU SoC using `SoCMini` with `UARTWishboneBridge` as the bus master
-- Create a CSR-mapped LED peripheral with `AutoCSR` and `CSRStorage`
-- Control hardware registers from a host Python script using `RemoteClient`
-
-**Features:**
-- LED control register at `0x40000400` (1-bit CSR, R/W)
-- Single-file design: builds and loads the bitstream when run directly
-- No CPU or BIOS required — host PC drives the bus over UART
-
-**Location**: [`02wishBoneLedBlink/`](./02wishBoneLedBlink/)
-
-See the [02wishBoneLedBlink README](./02wishBoneLedBlink/README.md) for details.
-
 ### 5. 03wishBoneCsrHdl
 
 Demonstrates wrapping an HDL module (VHDL or Verilog) as a Migen black-box and connecting it to the Wishbone bus using LiteX CSR registers. Implements a CRC32 peripheral backed by a generated HDL step entity. Shows how to:
@@ -136,7 +120,7 @@ Install: <br>
    cd gatemateA1LiteXMigenSnipplets
    ```
 
-2. Navigate to a project directory (e.g., `00btn2Led`, `01ledBlink`, `02wishBoneMasterAndPerrial`, `02wishBoneLedBlink`, `03wishBoneCsrHdl`, or `04cpuAndIO`)
+2. Navigate to a project directory (e.g., `00btn2Led`, `01ledBlink`, `02wishBoneMasterAndPerrial`, `03wishBoneCsrHdl`, or `04cpuAndIO`)
 
 3. Follow the project-specific README for build and programming instructions
 
@@ -158,9 +142,6 @@ Install: <br>
 │   ├── uartWishBoneCrsLed.py
 │   ├── wishBoneUartDebugLedPeripheralModule.py
 │   └── testBenchLedPeripheral.py
-├── 02wishBoneLedBlink/              # SoCMini + UART bridge + CSR LED (no CPU)
-│   ├── README.md
-│   └── socMiniUartWishBoneCrsLed.py
 ├── 03wishBoneCsrHdl/                # CRC32 peripheral via HDL black-box and CSR
 │   ├── README.md
 │   ├── wishBoneCrsCrc32Verilog.py   # FPGA design (Verilog black-box)
