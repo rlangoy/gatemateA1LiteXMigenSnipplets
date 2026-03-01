@@ -54,20 +54,7 @@ The stock LiteX RS232PHY can produce a truncated or corrupted first byte on the 
 | `vexriscvLedPeripheral.py` | VexRiscV SoC with hardened UART TX and a CSR-mapped LED peripheral (`LedPeripheral`) controllable from firmware |
 | `programChipOnly.py` | Flash a pre-built bitstream to the FPGA SRAM via DirtyJTAG without re-running synthesis |
 
-## Hardware Requirements
 
-- **Board**: Olimex GateMate A1 EVB (CCGM1A1 FPGA)
-- **Programmer**: on board: DirtyJTAG USB adapter (see repo root README for the required fork)
-
-## Dependencies
-
-- [Migen](https://github.com/m-labs/migen)
-- [LiteX](https://github.com/enjoy-digital/litex)
-- [LiteX-Boards](https://github.com/litex-hub/litex-boards) (provides the Olimex GateMate A1 EVB platform)
-- [Yosys](https://github.com/YosysHQ/yosys) + [openFPGALoader](https://github.com/trabucayre/openFPGALoader) (synthesis and programming)
-- RiscV toolchain (`riscv64-unknown-elf-gcc`) for compiling the LiteX BIOS
-
-See the [repo root README](../README.md) for install instructions.
 
 ## Usage
 
