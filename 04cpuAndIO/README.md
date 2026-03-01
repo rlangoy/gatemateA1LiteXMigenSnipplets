@@ -107,6 +107,8 @@ Streams the bitstream at `build/gateware/olimex_gatemate_a1_evb_00.cfg.bit` into
 ### Connect a terminal
 
 ```bash
+litex_term /dev/ttyACM0
+   or
 picocom -b 115200 /dev/ttyACM0
 ```
 
