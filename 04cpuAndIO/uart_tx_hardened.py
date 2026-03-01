@@ -5,6 +5,11 @@ Improves first-byte TX robustness by enforcing explicit bit-time staging
 and an optional pre-idle guard before the START bit. 
 Drop-in replacement for the stock LiteX RS232PHY 
 Usage: replace BaseSoc width SocUartTxHardened (by calling makeSocUartTxHardened) .
+The difference between regular rs232 is that rhe transfer of data has an extra IDLE delay before Tx
+Idle  Guard  Start   D0   D1   D2   D3   D4   D5   D6   D7   Stop  Idle
+  1      1      0      x    x    x    x    x    x    x    x     1     1
+        |<------------------ 10-bit frame --------------------->|
+        
 """
 from migen import *
 from migen.genlib.record import Record
