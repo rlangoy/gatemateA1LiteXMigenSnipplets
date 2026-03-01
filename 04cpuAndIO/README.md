@@ -134,7 +134,7 @@ The MRO override sidesteps both problems entirely.
 
 `LedPeripheral` is a one-register Migen `AutoCSR` module. Its single `CSRStorage` bit drives `user_led_n` (active low). LiteX registers it on the CSR bus so the CPU firmware can toggle the LED with a memory-mapped write.
 
-## Build Results
+####  vexriscvLedPeripheral - Build Results
 
 | Metric | Value |
 |---|---|
