@@ -1,0 +1,132 @@
+# 04 - RiscV SoC with Hardened UART TX
+
+A full LiteX SoC (RiscV CPU + BIOS) on the Olimex GateMate A1 EVB, with a patched UART TX path that fixes first-byte reliability issues seen with some USB-UART bridges on the GateMate toolchain.
+
+## Overview
+
+This project demonstrates how to:
+
+1. Run a **RiscV SoC** (PicoRV32 or VexRiscV) on the GateMate A1 EVB using LiteX
+2. Replace the standard **RS232PHY** with a patched version (`RS232PHYPatched`) using a factory/mixin pattern
+3. Override `add_uart()` via **Python MRO** so the patch is applied transparently during `BaseSoC.__init__` — no post-init surgery needed
+4. Add a **CSR-mapped LED peripheral** accessible from C firmware running on the CPU
+5. Flash a pre-built bitstream without re-running synthesis using `programChipOnly.py`
+
+## Why the UART TX patch?
+
+The stock LiteX RS232PHY can produce a truncated or corrupted first byte on the GateMate A1 EVB with certain USB-UART bridges. `RS232PHYPatched` fixes this by:
+
+- Adding **guard idle bit-times** before the START bit (gives the receiver time to lock on)
+- Using an explicit **10-bit frame FSM** with a stable one-tick-per-bit cadence instead of relying on counter inference by the toolchain
+
+## Architecture
+
+```
+ Host PC                          FPGA (GateMate A1)
++-----------------+              +--------------------------------------------+
+|                 |   UART       |                                            |
+| Terminal        |<------------>| RS232PHYPatched (TX patched, RX compatible)|
+|  (115200 baud)  |  TX/RX       |   |                                       |
+|                 |              |   | LiteX UART core (TX/RX FIFOs)         |
+|                 |              |   |                                       |
+|                 |              |   v                                       |
+|                 |              | RiscV CPU (PicoRV32 / VexRiscV)           |
+|                 |              |   | Wishbone / AXI-lite                   |
+|                 |              |   v                                       |
+|                 |              | LiteX BIOS  (runs from BRAM)              |
+|                 |              |   |                                       |
+|                 |              |   v                                       |
+|                 |              | CSR bus                                   |
+|                 |              |   |                                       |
+|                 |              |   v                                       |
+|                 |              | LedPeripheral  (vexriscvLedPeripheral.py) |
+|                 |              |   - control @ CSR offset 0                |
+|                 |              |   - bit 0 → user_led_n                    |
++-----------------+              +--------------------------------------------+
+```
+
+## Files
+
+| File | Description |
+|---|---|
+| `gateMateHardenedTxUart.py` | Drop-in replacement for `olimex_gatemate_a1_evb` target: full LiteX SoC with patched UART TX. Exposes all original target options (video, ethernet, SDCard, flash) |
+| `uart_tx_hardened.py` | `make_uart_tx_hardened(BaseSoC)` factory: returns a subclass of any `BaseSoC` with `add_uart()` overridden to install `RS232PHYPatched`. Also contains `RS232PHYPatched`, `RS232PHYTXPatched`, and `RS232PHYRXCompatible` |
+| `vexriscvLedPeripheral.py` | VexRiscV SoC with hardened UART TX and a CSR-mapped LED peripheral (`LedPeripheral`) controllable from firmware |
+| `programChipOnly.py` | Flash a pre-built bitstream to the FPGA SRAM via DirtyJTAG without re-running synthesis |
+
+
+
+## Usage
+
+### Build and load (gateMateHardenedTxUart.py)
+
+```bash
+# PicoRV32 minimal CPU, build gateware + BIOS, then load into FPGA SRAM
+python3 gateMateHardenedTxUart.py --cpu-type picorv32 --cpu-variant minimal --build --load
+
+# Flash to SPI flash (survives power cycle)
+python3 gateMateHardenedTxUart.py --cpu-type picorv32 --cpu-variant minimal --build --flash
+
+# Show all available options (Target / Logging / Builder)
+python3 gateMateHardenedTxUart.py --help
+```
+
+### Build and load (vexriscvLedPeripheral.py)
+
+```bash
+python3 vexriscvLedPeripheral.py
+```
+
+This builds with VexRiscV, adds the `LedPeripheral` CSR, and immediately flashes the bitstream via DirtyJTAG.
+
+### Flash a pre-built bitstream only
+
+```bash
+python3 programChipOnly.py
+```
+
+Streams the bitstream at `build/gateware/olimex_gatemate_a1_evb_00.cfg.bit` into the FPGA SRAM without re-running synthesis.
+
+### Connect a terminal
+
+```bash
+litex_term /dev/ttyACM0
+   or
+picocom -b 115200 /dev/ttyACM0
+```
+
+The LiteX BIOS prints to UART at 115200 baud. Adjust the device node to match your USB-UART adapter.
+
+## How It Works
+
+### UART TX hardening (`uart_tx_hardened.py`)
+
+`make_uart_tx_hardened(BaseSoC)` dynamically creates a subclass of the given `BaseSoC` class. The subclass overrides `add_uart()`. When `BaseSoC.__init__` calls `self.add_uart(...)`, Python's MRO dispatches to the override, which:
+
+1. Requests the `serial` platform resource via `platform.request(..., loose=True)`
+2. Instantiates `RS232PHYPatched` instead of the standard `RS232PHY`
+3. Registers the UART module with LiteX via `self.add_module()`
+
+Non-serial UART types (crossover, jtag_uart, …) fall through to the parent unchanged.
+
+### Why MRO instead of post-init patching
+
+Attempting to replace the PHY after `BaseSoC.__init__` fails in two ways:
+- `platform.request("serial")` raises `ConstraintError` because the resource was already consumed
+- Re-assigning `self.submodules.uart_phy` appends a second module instead of replacing the first, causing a double-driver error on `pads.tx`
+
+The MRO override sidesteps both problems entirely.
+
+### LedPeripheral (`vexriscvLedPeripheral.py`)
+
+`LedPeripheral` is a one-register Migen `AutoCSR` module. Its single `CSRStorage` bit drives `user_led_n` (active low). LiteX registers it on the CSR bus so the CPU firmware can toggle the LED with a memory-mapped write.
+
+####  vexriscvLedPeripheral - Build Results
+
+| Metric | Value |
+|---|---|
+| CPE utilisation | ~26% |
+| BRAM utilisation | ~44% |
+| GPIO utilisation | ~4% |
+| Max frequency | 24.83 MHz (constraint: 24 MHz) |
+| Programmer | DirtyJTAG via openFPGALoader |

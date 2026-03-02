@@ -1,13 +1,14 @@
+
 #!/usr/bin/env python3
 
 from migen import *
 from litex_boards.targets.olimex_gatemate_a1_evb import BaseSoC
-from litex_boards.platforms import olimex_gatemate_a1_evb
-
 from litex.soc.integration.builder import Builder
 from litex.soc.integration.soc_core import soc_core_args, soc_core_argdict
 from litex.soc.interconnect.csr import AutoCSR, CSRStorage
 import argparse
+
+from uart_tx_hardened import makeSocUartTxHardened
 
 
 # -------------------------------------------------
@@ -22,29 +23,18 @@ class LedPeripheral(Module, AutoCSR):
 # -------------------------------------------------
 # Custom SoC
 # -------------------------------------------------
-class MySoC(BaseSoC):
+BaseSocUartTxHardened = makeSocUartTxHardened(BaseSoC)
+class MySoC(BaseSocUartTxHardened):  # BaseSocUartTxHardened overrides add_uart() to use RS232PHYPatched
     def __init__(self, **kwargs):
-        #kwargs.setdefault("cpu_type", "picorv32")
         kwargs.setdefault("cpu_type", "vexriscv")
-        #kwargs.setdefault("uart_baudrate", 115200)
-        #kwargs.setdefault("uart_baudrate", 115200 )
-#        kwargs.setdefault("sys-clk-freq", 1000000 ) #1MHz
-
-        #kwargs.setdefault("with-uartbone", "true")
-        #kwargs.setdefault("with-uartbone", "true")
-        #kwargs.setdefault("uart_fifo_depth", 4)  # Depth of 128 reduces the likleihood of eronious output on slower terminals
-
-        #Adds self.patform
-        BaseSoC.__init__(self,
+        kwargs.setdefault("uart_baudrate", 115200)
+  
+        BaseSocUartTxHardened.__init__(self,
             with_led_chaser=False,     # Disable chaser so we can claim user_led_n ourselves
             **kwargs
         )
 
-
         platform = self.platform
-
-         # Remove IO region
-        #self.bus.regions.pop("io0", None)
 
         # Request physical LED from platform (active-low: _n suffix)
         led = platform.request("user_led_n", 0)
@@ -71,7 +61,6 @@ def main():
     # Flash bitstream to FPGA SRAM via dirtyJtag
     prog = soc.platform.create_programmer()
     prog.load_bitstream(builder.get_bitstream_filename(mode="sram"))
-
 
 if __name__ == "__main__":
     main()
