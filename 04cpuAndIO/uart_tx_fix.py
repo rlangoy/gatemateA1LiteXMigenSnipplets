@@ -28,8 +28,7 @@ from litex.gen.genlib.misc import WaitTimer
 from litex.soc.interconnect.csr import *
 from litex.soc.interconnect.csr_eventmanager import *
 from litex.soc.interconnect import stream
-
-from uart_tx_hardened import RS232PHYPatched, UARTInterface
+from litex.soc.cores.uart import RS232PHY, UARTInterface
 
 
 # -- FIFO (patched) that removed bit errors when  ------------------------------------------------
@@ -144,12 +143,11 @@ def makeSocUartTxFix(BaseSoC):
                                  rx_fifo_rx_we=rx_fifo_rx_we)
                 return
 
-            patched_phy = RS232PHYPatched(
+            patched_phy = RS232PHY(
                 uart_pads,
                 clk_freq=int(self.sys_clk_freq),
                 baudrate=baudrate,
                 with_dynamic_baudrate=with_dynamic_baudrate,
-                tx_guard_bits=1,
             )
 
             uart = UARTPatched(patched_phy,
