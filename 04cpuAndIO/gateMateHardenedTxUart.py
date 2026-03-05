@@ -22,19 +22,21 @@ from litex_boards.platforms import olimex_gatemate_a1_evb
 from litex.soc.integration.builder import Builder
 from litex.build.parser import LiteXArgumentParser
 
-# makeSocUartTxHardened(BaseSoC) returns a subclass of BaseSoC that overrides
+# makeSocUartTxFix(BaseSoC) returns a subclass of BaseSoC that overrides
 # add_uart() to install RS232PHYPatched instead of the standard RS232PHY.
 # Python MRO ensures the override is called when BaseSoC.__init__ internally
 # invokes self.add_uart(), so no post-init patching is needed.
-from uart_tx_hardened import makeSocUartTxHardened
+from uart_tx_fix import makeSocUartTxFix
+
 
 # -------------------------------------------------
 # Custom SoC
 # -------------------------------------------------
-BaseSocUartTxHardened = makeSocUartTxHardened(BaseSoC)
-class MySoC(BaseSocUartTxHardened):
+
+BaseSocUartTxFix  = makeSocUartTxFix(BaseSoC)
+class MySoC(BaseSocUartTxFix):
     def __init__(self, **kwargs):
-        BaseSocUartTxHardened.__init__(self, **kwargs)
+        BaseSocUartTxFix.__init__(self, **kwargs)
 
 # -------------------------------------------------
 # Build & Flash
