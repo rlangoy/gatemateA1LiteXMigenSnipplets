@@ -1,21 +1,18 @@
 """
 Drop-in replacement for the UART core patches applied to LiteX's uart.py.
 
-Encapsulates all patches so the installed LiteX uart.py can remain stock:
-  - PATCH-3: add_auto_tx_flush ANDs with source.ready (no silent byte loss)
-  - PATCH-4: TX IRQ triggers on FIFO-empty instead of FIFO-not-full
-  - AsyncFIFO depth rounded to next power of two (fixes bit-flip corruption)
-  - SyncFIFO uses buffered=False
+Encapsulates the UART bit error fix when echoing chars in sush a wat that the installed LiteX uart.py can remain stock:
 
-Also integrates the hardened TX PHY from uart_tx_hardened.py (PATCH-2,
-guard-bit, early-start, majority-vote RX, reset-gated TX clock domain).
+Root cause: LiteX's uart.py function:  _get_uart_fifo uses buffered=True, adds an output register stage.
+   On Xilinx/Intel FPGAs the FIFO memory is LUT-RAM (combinatorial read), so one register gives correct 1-cycle latency.
+   On GateMate, depth ≥ 32 is synthesised as CC_BRAM (synchronous read, already 1-cycle latency), so the extra register stage makes it 2 cycles — the CPU reads stale data every time.
 
 Usage:
     from uart_tx_fix import makeSocUartTxFix
 
     BaseSocPatched = makeSocUartTxFix(BaseSoC)
+
     class MySoC(BaseSocPatched):
-        ...
 """
 
 from math import log2
