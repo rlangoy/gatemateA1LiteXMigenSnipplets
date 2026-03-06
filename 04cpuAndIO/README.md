@@ -1,23 +1,26 @@
-# 04 - RiscV SoC with Hardened UART TX
+# 04 - RiscV SoC with Patched UART (GateMate CC_BRAM FIFO fix)
 
-A full LiteX SoC (RiscV CPU + BIOS) on the Olimex GateMate A1 EVB, with a patched UART TX path that fixes first-byte reliability issues seen with some USB-UART bridges on the GateMate toolchain.
+A full LiteX SoC (RiscV CPU + BIOS) on the Olimex GateMate A1 EVB, with a patched UART core that fixes intermittent echo corruption seen when typing in the LiteX BIOS.
 
 ## Overview
 
 This project demonstrates how to:
 
 1. Run a **RiscV SoC** (PicoRV32 or VexRiscV) on the GateMate A1 EVB using LiteX
-2. Replace the standard **RS232PHY** with a patched version (`RS232PHYPatched`) using a factory/mixin pattern
+2. Replace the standard **UART** core with a patched version (`UARTPatched`) using a factory/mixin pattern
 3. Override `add_uart()` via **Python MRO** so the patch is applied transparently during `BaseSoC.__init__` — no post-init surgery needed
 4. Add a **CSR-mapped LED peripheral** accessible from C firmware running on the CPU
 5. Flash a pre-built bitstream without re-running synthesis using `programChipOnly.py`
 
-## Why the UART TX patch?
+## Why the UART patch?
 
-The stock LiteX RS232PHY can produce a truncated or corrupted first byte on the GateMate A1 EVB with certain USB-UART bridges. `RS232PHYPatched` fixes this by:
+The stock LiteX UART core produces intermittent echo corruption (dropped or stale bytes) on the GateMate A1 EVB. The root cause is a FIFO output register mismatch:
 
-- Adding **guard idle bit-times** before the START bit (gives the receiver time to lock on)
-- Using an explicit **10-bit frame FSM** with a stable one-tick-per-bit cadence instead of relying on counter inference by the toolchain
+- LiteX's `_get_uart_fifo` uses `buffered=True`, which adds an output register stage after the FIFO memory.
+- On Xilinx/Intel FPGAs the FIFO memory is LUT-RAM (combinatorial read), so the extra register gives correct 1-cycle latency.
+- On GateMate, FIFO depth ≥ 32 is synthesised as **CC_BRAM** (synchronous read, already 1-cycle latency). The extra register stage makes it **2 cycles**, so the CPU reads stale data on every access.
+
+`UARTPatched` fixes this by setting `buffered=False` on the sync FIFO, matching the CC_BRAM single-cycle read latency. It also corrects the TX flush-timer byte-drop race by gating the flush on `source.ready`.
 
 ## Architecture
 
@@ -25,9 +28,9 @@ The stock LiteX RS232PHY can produce a truncated or corrupted first byte on the 
  Host PC                          FPGA (GateMate A1)
 +-----------------+              +--------------------------------------------+
 |                 |   UART       |                                            |
-| Terminal        |<------------>| RS232PHYPatched (TX patched, RX compatible)|
+| Terminal        |<------------>| RS232PHY (stock)                           |
 |  (115200 baud)  |  TX/RX       |   |                                       |
-|                 |              |   | LiteX UART core (TX/RX FIFOs)         |
+|                 |              |   | UARTPatched (buffered=False FIFOs)     |
 |                 |              |   |                                       |
 |                 |              |   v                                       |
 |                 |              | RiscV CPU (PicoRV32 / VexRiscV)           |
@@ -49,12 +52,12 @@ The stock LiteX RS232PHY can produce a truncated or corrupted first byte on the 
 
 | File | Description |
 |---|---|
-| `gateMateHardenedTxUart.py` | Drop-in replacement for `olimex_gatemate_a1_evb` target: full LiteX SoC with patched UART TX. Exposes all original target options (video, ethernet, SDCard, flash) |
-| `uart_tx_hardened.py` | `make_uart_tx_hardened(BaseSoC)` factory: returns a subclass of any `BaseSoC` with `add_uart()` overridden to install `RS232PHYPatched`. Also contains `RS232PHYPatched`, `RS232PHYTXPatched`, and `RS232PHYRXCompatible` |
-| `vexriscvLedPeripheral.py` | VexRiscV SoC with hardened UART TX and a CSR-mapped LED peripheral (`LedPeripheral`) controllable from firmware |
+| `gateMateHardenedTxUart.py` | Drop-in replacement for `olimex_gatemate_a1_evb` target: full LiteX SoC with patched UART. Exposes all original target options (video, ethernet, SDCard, flash) |
+| `uart_tx_fix.py` | `makeSocUartTxFix(BaseSoC)` factory: returns a subclass of any `BaseSoC` with `add_uart()` overridden to install `UARTPatched`. Contains `UARTPatched` and `_get_uart_fifo_patched` |
+| `vexriscvLedPeripheral.py` | VexRiscV SoC with patched UART and a CSR-mapped LED peripheral (`LedPeripheral`) controllable from firmware |
 | `programChipOnly.py` | Flash a pre-built bitstream to the FPGA SRAM via DirtyJTAG without re-running synthesis |
-
-
+| `installUartFix.py` | Copy `litex_patch/uart.py` directly into the installed LiteX package (alternative to the MRO factory approach) |
+| `litex_patch/uart.py` | Patched drop-in replacement for LiteX's `soc/cores/uart.py` with the CC_BRAM FIFO fix applied |
 
 ## Usage
 
@@ -77,7 +80,7 @@ python3 gateMateHardenedTxUart.py --help
 python3 vexriscvLedPeripheral.py
 ```
 
-This builds with VexRiscV, adds the `LedPeripheral` CSR, and immediately flashes the bitstream via DirtyJTAG.
+This builds with VexRiscV, adds the `LedPeripheral` CSR, and immediately loads the bitstream into FPGA SRAM via DirtyJTAG.
 
 ### Flash a pre-built bitstream only
 
@@ -86,6 +89,14 @@ python3 programChipOnly.py
 ```
 
 Streams the bitstream at `build/gateware/olimex_gatemate_a1_evb_00.cfg.bit` into the FPGA SRAM without re-running synthesis.
+
+### Install the patch directly into LiteX (alternative)
+
+```bash
+python3 installUartFix.py
+```
+
+Copies `litex_patch/uart.py` over LiteX's installed `soc/cores/uart.py`. This is an alternative to the MRO factory approach — use it if you want all LiteX targets on this machine to pick up the fix without modifying their source.
 
 ### Connect a terminal
 
@@ -99,19 +110,20 @@ The LiteX BIOS prints to UART at 115200 baud. Adjust the device node to match yo
 
 ## How It Works
 
-### UART TX hardening (`uart_tx_hardened.py`)
+### UART FIFO fix (`uart_tx_fix.py`)
 
-`make_uart_tx_hardened(BaseSoC)` dynamically creates a subclass of the given `BaseSoC` class. The subclass overrides `add_uart()`. When `BaseSoC.__init__` calls `self.add_uart(...)`, Python's MRO dispatches to the override, which:
+`makeSocUartTxFix(BaseSoC)` dynamically creates a subclass of the given `BaseSoC` class. The subclass overrides `add_uart()`. When `BaseSoC.__init__` calls `self.add_uart(...)`, Python's MRO dispatches to the override, which:
 
 1. Requests the `serial` platform resource via `platform.request(..., loose=True)`
-2. Instantiates `RS232PHYPatched` instead of the standard `RS232PHY`
-3. Registers the UART module with LiteX via `self.add_module()`
+2. Instantiates the stock `RS232PHY` (unchanged)
+3. Wraps it in `UARTPatched` (patched FIFOs) instead of the standard `UART`
+4. Registers the module with LiteX via `self.add_module()`
 
 Non-serial UART types (crossover, jtag_uart, …) fall through to the parent unchanged.
 
 ### Why MRO instead of post-init patching
 
-Attempting to replace the PHY after `BaseSoC.__init__` fails in two ways:
+Attempting to replace the UART after `BaseSoC.__init__` fails in two ways:
 - `platform.request("serial")` raises `ConstraintError` because the resource was already consumed
 - Re-assigning `self.submodules.uart_phy` appends a second module instead of replacing the first, causing a double-driver error on `pads.tx`
 
