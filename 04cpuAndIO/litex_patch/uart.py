@@ -6,9 +6,6 @@
 # Copyright (c) 2015 Sebastien Bourdeauducq <sb@m-labs.hk>
 # Copyright (c) 2018 Tim 'mithro' Ansell <me@mith.ro>
 # SPDX-License-Identifier: BSD-2-Clause
-#
-# Fix for:
-#            Root cause of bit-flip corruption with large FIFO depths:
 
 from math import log2
 
@@ -60,10 +57,6 @@ class RS232PHYTX(LiteXModule):
     def __init__(self, pads, tuning_word):
         self.sink = sink = stream.Endpoint([("data", 8)])
 
-        # PATCH-2: Pulses HIGH for exactly one clock when the STOP bit
-        # completes (RUN→IDLE transition). Used by add_auto_tx_flush.
-        self.at_byte_boundary = Signal()
-
         # # #
 
         pads.tx.reset = 1
@@ -77,10 +70,10 @@ class RS232PHYTX(LiteXModule):
         # FSM
         self.fsm = fsm = FSM(reset_state="IDLE")
         fsm.act("IDLE",
+            # Reset Count and set TX to Idle.
             NextValue(count,   0),
             NextValue(pads.tx, RS232_IDLE),
-            # PATCH-2: clear boundary flag while idle.
-            NextValue(self.at_byte_boundary, 0),
+            # Wait for TX data to transmit.
             If(sink.valid,
                 NextValue(pads.tx, RS232_START),
                 NextValue(data, sink.data),
@@ -88,16 +81,21 @@ class RS232PHYTX(LiteXModule):
             )
         )
         fsm.act("RUN",
+            # Enable Clock Phase Accumulator.
             clk_phase_accum.enable.eq(1),
+            # On Clock Phase Accumulator tick:
             If(clk_phase_accum.tick,
+                # Set TX data.
                 NextValue(pads.tx, data[0]),
+                # Increment Count.
                 NextValue(count, count + 1),
+                # Shift TX data.
                 NextValue(data, Cat(data[1:], RS232_STOP)),
+                # When 10-bit have been transmitted...
                 If(count == (10 - 1),
+                    # Ack sink and return to Idle.
                     sink.ready.eq(1),
-                    NextState("IDLE"),
-                    # PATCH-2: assert boundary for one clock on RUN→IDLE.
-                    NextValue(self.at_byte_boundary, 1),
+                    NextState("IDLE")
                 )
             )
         )
@@ -124,17 +122,25 @@ class RS232PHYRX(LiteXModule):
         # FSM
         self.fsm = fsm = FSM(reset_state="IDLE")
         fsm.act("IDLE",
+            # Reset Count.
             NextValue(count, 0),
+            # Wait for RX Start bit.
             If((rx == RS232_START) & (rx_d == RS232_IDLE),
                 NextState("RUN")
             )
         )
         fsm.act("RUN",
+            # Enable Clock Phase Accumulator.
             clk_phase_accum.enable.eq(1),
+            # On Clock Phase Accumulator tick:
             If(clk_phase_accum.tick,
+                # Increment Count.
                 NextValue(count, count + 1),
+                # Shift RX data.
                 NextValue(data, Cat(data[1:], rx)),
+                # When 10-bit have been received...
                 If(count == (10 - 1),
+                    # Produce data (but only when RX Stop bit is seen).
                     source.valid.eq(rx == RS232_STOP),
                     source.data.eq(data),
                     NextState("IDLE")
@@ -152,8 +158,6 @@ class RS232PHY(LiteXModule):
         self.tx = RS232PHYTX(pads, tuning_word)
         self.rx = RS232PHYRX(pads, tuning_word)
         self.sink, self.source = self.tx.sink, self.rx.source
-        # PATCH-2: expose TX byte-boundary strobe for flush gating.
-        self.tx_at_byte_boundary = self.tx.at_byte_boundary
 
 
 class RS232PHYMultiplexer(LiteXModule):
@@ -190,25 +194,14 @@ class RS232PHYModel(LiteXModule):
         ]
 
 # UART ---------------------------------------------------------------------------------------------
-#    Return the smallest power of two greater than or equal to the given value.
-def _nextPowerOfTwo(value: int) -> int:
 
-    # Ensure that values less than or equal to 1 return 1
-    if value <= 1:
-        return 1
-
-    # Compute the next power of two using the bit length of (value - 1)
-    return 1 << (value - 1).bit_length()
-    
 def _get_uart_fifo(depth, sink_cd="sys", source_cd="sys"):
     if sink_cd != source_cd:
-        async_depth = _nextPowerOfTwo(depth) 
-        fifo = stream.AsyncFIFO([("data", 8)], async_depth)
+        fifo = stream.AsyncFIFO([("data", 8)], depth)
         return ClockDomainsRenamer({"write": sink_cd, "read": source_cd})(fifo)
     else:
-        return stream.SyncFIFO([("data", 8)], depth, buffered=False)
+        return stream.SyncFIFO([("data", 8)], depth, buffered=True)
 
-        
 def UARTPHY(pads, clk_freq, baudrate, with_dynamic_baudrate=False):
     # FT245 Asynchronous FIFO mode (baudrate ignored)
     if hasattr(pads, "rd_n") and hasattr(pads, "wr_n"):
@@ -224,8 +217,8 @@ class UART(LiteXModule, UARTInterface):
             rx_fifo_depth = 16,
             rx_fifo_rx_we = False,
             phy_cd        = "sys"):
-        self._rxtx    = CSR(8, name="rxtx")
-        self._txfull  = CSRStatus(description="TX FIFO Full.",  name="txfull")
+        self._rxtx    = CSR(8, name="rxtx") # RX/TX Data.
+        self._txfull  = CSRStatus(description="TX FIFO Full.", name="txfull")
         self._rxempty = CSRStatus(description="RX FIFO Empty.", name="rxempty")
 
         self.ev    = EventManager()
@@ -234,7 +227,7 @@ class UART(LiteXModule, UARTInterface):
         self.ev.finalize()
 
         self._txempty = CSRStatus(description="TX FIFO Empty.", name="txempty")
-        self._rxfull  = CSRStatus(description="RX FIFO Full.",  name="rxfull")
+        self._rxfull  = CSRStatus(description="RX FIFO Full.", name="rxfull")
 
         # # #
 
@@ -250,36 +243,35 @@ class UART(LiteXModule, UARTInterface):
         # TX
         # --
         self.tx_fifo = tx_fifo = _get_uart_fifo(tx_fifo_depth, source_cd=phy_cd)
+
+        # Flush gate: add_auto_tx_flush drives this to pace the TX drain.
+        # reset=1 = fully transparent when flush is inactive or never called.
+        # valid is gated (not ready) so the PHY always completes the current
+        # byte before the flush can influence what is loaded next:
+        #   - In RUN the PHY never reads sink.valid.
+        #   - sink.ready fires at count==9; the FIFO dequeues via ungated ready.
+        #   - The PHY enters IDLE where _tx_flush_valid is checked.
+        #   - Only here can the flush suppress the next byte load.
+        #   - Counter is always complete before data can change.
+        self._tx_flush_valid = Signal(reset=1)
+
         self.comb += [
             # CSR --> FIFO.
             tx_fifo.sink.valid.eq(self._rxtx.re),
             tx_fifo.sink.data.eq(self._rxtx.r),
 
             # FIFO --> Source.
-            tx_fifo.source.connect(self.source),
+            # valid gated by _tx_flush_valid; ready left ungated.
+            self.source.valid.eq(tx_fifo.source.valid & self._tx_flush_valid),
+            self.source.data.eq(tx_fifo.source.data),
+            tx_fifo.source.ready.eq(self.source.ready),
 
             # CSR Status.
             self._txfull.status.eq(~tx_fifo.sink.ready),
             self._txempty.status.eq(~tx_fifo.source.valid),
 
-            # PATCH-4: IRQ trigger changed from NOT-FULL to EMPTY.
-            #
-            # Original: self.ev.tx.trigger.eq(tx_fifo.sink.ready)
-            #   tx_fifo.sink.ready = 1 whenever FIFO has any free space.
-            #   For large FIFOs (depth=64) with light load, this is
-            #   permanently 1 → TX IRQ permanently asserted → CPU wastes
-            #   23-46% of every character period on spurious TX ISR calls
-            #   → RX ISR delayed → RX FIFO collisions → 1→0 bit flips.
-            #   (With depth=8 the FIFO fills quickly under key-repeat so
-            #   sink.ready goes 0 and the IRQ gates correctly — which is
-            #   why depth=8 worked and depth=64 did not.)
-            #
-            # Fixed: trigger on FIFO-empty (~source.valid).
-            #   IRQ fires only when all queued bytes are transmitted.
-            #   CPU is woken to refill the FIFO, then IRQ is masked by
-            #   the driver until more data is queued.  This is standard
-            #   UART TX-empty IRQ behaviour.
-            self.ev.tx.trigger.eq(~tx_fifo.source.valid),  # PATCH-4: was tx_fifo.sink.ready
+            # IRQ (When FIFO becomes non-full).
+            self.ev.tx.trigger.eq(tx_fifo.sink.ready)
         ]
 
         # RX
@@ -304,29 +296,16 @@ class UART(LiteXModule, UARTInterface):
     def add_auto_tx_flush(self, sys_clk_freq, timeout=1e-2, interval=2):
         # Add automatic TX flush when ready is not active for a long time (timeout), this can prevent
         # stalling the UART (and thus CPU) when the PHY is not operational at startup.
-
-        flush_ep    = stream.Endpoint([("data", 8)])
+        # Drives only self._tx_flush_valid — pre-allocated in __init__ — giving
+        # exactly one comb driver per net at any FIFO depth.
         flush_count = Signal(int(log2(interval)))
-
-        # Insert Flush Endpoint between TX FIFO and Source.
-        self.comb += self.tx_fifo.source.connect(flush_ep)
-        self.comb += flush_ep.connect(self.source)
-
-        # Flush TX FIFO when Source.ready is inactive for timeout (with interval cycles between
-        # each ready).
-        self.timer = timer = WaitTimer(timeout*sys_clk_freq)
+        self.timer  = timer = WaitTimer(timeout * sys_clk_freq)
         self.comb += timer.wait.eq(~self.source.ready)
         self.sync += flush_count.eq(flush_count + 1)
-
-        # PATCH-3: Original:
-        #   self.comb += If(timer.done, flush_ep.ready.eq(flush_count == 0))
-        # Bug: forced flush_ep.ready=1 without checking phy.sink.ready,
-        # causing FIFO to silently dequeue bytes the PHY could not accept
-        # (produced erroneous menu display on startup).
-        # Fix: AND with self.source.ready so flush only happens when PHY
-        # can genuinely accept the byte.
         self.comb += If(timer.done,
-            flush_ep.ready.eq((flush_count == 0) & self.source.ready)  # PATCH-3
+            self._tx_flush_valid.eq(flush_count == 0)
+        ).Else(
+            self._tx_flush_valid.eq(1)
         )
 
 # UART Bone ----------------------------------------------------------------------------------------
