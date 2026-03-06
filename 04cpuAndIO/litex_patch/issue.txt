@@ -1,0 +1,98 @@
+
+
+
+
+Issue
+olimex_gatemate_a1_evb: BIOS UART corruption - intermittent echo error when keys are pressed
+
+Symptoms:
+
+Problems ocures using when uart-fifo-depth : 16,64,256 
+Problems not displayed using when using uart-fifo-depth : 4
+
+Problem description:
+
+Builing and flashing (python3 -m litex_boards.targets.olimex_gatemate_a1_evb --cpu-type picorv32 --cpu-variant minimal--build --load)
+Starting Terminal (litex_term /dev/ttyACM0)
+Entering : "help" echoes "h%elp"
+Pushing 'Ennter" -> Show the Help Menu corectly
+Pushing : 'UP-ARROW" -> echoes "help"
+
+Testing on Olimex GateMateA1-EVB Rev.C (2025)
+python3 -m litex_boards.targets.olimex_gatemate_a1_evb --cpu-type picorv32 --cpu-variant minimal--build --load
+(py3env) rune@rune-Precision-Tower-3620:~/gatemateA1LiteXMigenSnipplets/04cpuAndIO$ litex_term /dev/ttyACM0
+
+        __   _ __      _  __
+       / /  (_) /____ | |/_/
+      / /__/ / __/ -_)>  <
+     /____/_/\__/\__/_/|_|
+   Build your hardware, easily!
+
+ (c) Copyright 2012-2025 Enjoy-Digital
+ (c) Copyright 2007-2015 M-Labs
+
+ BIOS built on Mar  6 2026 07:53:17
+ BIOS CRC passed (40671047)
+
+ LiteX git sha1: 9a52a3a4a
+
+--=============== SoC ==================--
+CPU:            PicoRV32 @ 24MHz
+BUS:            wishbone 32-bit @ 4GiB
+CSR:            32-bit data big ordering
+ROM:            128.0KiB
+SRAM:           8.0KiB
+
+
+--============== Boot ==================--
+Booting from serial...
+Press Q or ESC to abort boot completely.
+sL5DdSMmkekro
+Timeout
+No boot medium found
+
+--============= Console ================--
+
+litex> h%lp
+<--- when pushing enter the command is intepreted ok -->
+
+LiteX BIOS, available commands:
+
+leds                     - Set Leds value
+flush_cpu_dcache         - Flush CPU data cache
+crc                      - Compute CRC32 of a part of the address space
+ident                    - Identifier of the system
+help                     - Print this help
+
+serialboot               - Boot from Serial (SFL)
+reboot                   - Reboot
+boot                     - Boot from Memory
+
+mem_cmp                  - Compare memory content
+mem_speed                - Test memory speed
+mem_test                 - Test memory access
+mem_copy                 - Copy address space
+mem_write                - Write address space
+mem_read                 - Read address space
+mem_list                 - List available memory regions
+
+Expected behavior:
+In the 
+
+
+Test Executed:
+
+If lowering the uart-fifo-depth the symptoms seems do disaprear: 
+ python3 -m litex_boards.targets.olimex_gatemate_a1_evb --cpu-type picorv32 --cpu-variant minimal --load   --uart-fifo-depth 4
+
+If The uart-fifo-depth : 16,64,256 and 
+ python3 -m litex_boards.targets.olimex_gatemate_a1_evb --cpu-type picorv32 --cpu-variant minimal --load   --uart-fifo-depth 64
+the uart-fifo-depth the symptoms seems do disaprear:  
+ 
+ 
+Cause of problem is likely related to:
+   Timing issues related to the auto_tx_flush
+
+Proposed fix: (Need revising)
+
+
