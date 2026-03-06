@@ -1,0 +1,71 @@
+diff --git a/litex/soc/cores/uart.py b/litex/soc/cores/uart.py
+index a712514a3..acb314919 100644
+--- a/litex/soc/cores/uart.py
++++ b/litex/soc/cores/uart.py
+@@ -243,13 +243,28 @@ class UART(LiteXModule, UARTInterface):
+         # TX
+         # --
+         self.tx_fifo = tx_fifo = _get_uart_fifo(tx_fifo_depth, source_cd=phy_cd)
++
++        # Flush gate: add_auto_tx_flush drives this to pace the TX drain.
++        # reset=1 = fully transparent when flush is inactive or never called.
++        # valid is gated (not ready) so the PHY always completes the current
++        # byte before the flush can influence what is loaded next:
++        #   - In RUN the PHY never reads sink.valid.
++        #   - sink.ready fires at count==9; the FIFO dequeues via ungated ready.
++        #   - The PHY enters IDLE where _tx_flush_valid is checked.
++        #   - Only here can the flush suppress the next byte load.
++        #   - Counter is always complete before data can change.
++        self._tx_flush_valid = Signal(reset=1)
++
+         self.comb += [
+             # CSR --> FIFO.
+             tx_fifo.sink.valid.eq(self._rxtx.re),
+             tx_fifo.sink.data.eq(self._rxtx.r),
+ 
+             # FIFO --> Source.
+-            tx_fifo.source.connect(self.source),
++            # valid gated by _tx_flush_valid; ready left ungated.
++            self.source.valid.eq(tx_fifo.source.valid & self._tx_flush_valid),
++            self.source.data.eq(tx_fifo.source.data),
++            tx_fifo.source.ready.eq(self.source.ready),
+ 
+             # CSR Status.
+             self._txfull.status.eq(~tx_fifo.sink.ready),
+@@ -281,21 +296,17 @@ class UART(LiteXModule, UARTInterface):
+     def add_auto_tx_flush(self, sys_clk_freq, timeout=1e-2, interval=2):
+         # Add automatic TX flush when ready is not active for a long time (timeout), this can prevent
+         # stalling the UART (and thus CPU) when the PHY is not operational at startup.
+-
+-        flush_ep    = stream.Endpoint([("data", 8)])
++        # Drives only self._tx_flush_valid — pre-allocated in __init__ — giving
++        # exactly one comb driver per net at any FIFO depth.
+         flush_count = Signal(int(log2(interval)))
+-
+-        # Insert Flush Endpoint between TX FIFO and Source.
+-        self.comb += self.tx_fifo.source.connect(flush_ep)
+-        self.comb += flush_ep.connect(self.source)
+-
+-        # Flush TX FIFO when Source.ready is inactive for timeout (with interval cycles between
+-        # each ready).
+-        self.timer = timer = WaitTimer(timeout*sys_clk_freq)
++        self.timer  = timer = WaitTimer(timeout * sys_clk_freq)
+         self.comb += timer.wait.eq(~self.source.ready)
+         self.sync += flush_count.eq(flush_count + 1)
+-        self.comb += If(timer.done, flush_ep.ready.eq(flush_count == 0))
+-        #self.sync += If(flush_ep.valid & flush_ep.ready, Display("%c", flush_ep.data))
++        self.comb += If(timer.done,
++            self._tx_flush_valid.eq(flush_count == 0)
++        ).Else(
++            self._tx_flush_valid.eq(1)
++        )
+ 
+ # UART Bone ----------------------------------------------------------------------------------------
+ 
+@@ -483,4 +494,4 @@ class UARTCrossover(UART):
+         self.comb += [
+             self.source.connect(self.xover.sink),
+             self.xover.source.connect(self.sink)
+-        ]
++        ]
+\ No newline at end of file
