@@ -20,13 +20,13 @@ class LedPeripheral(Module, AutoCSR):
 # -------------------------------------------------
 # Custom SoC
 # -------------------------------------------------
-class MySoC(BaseSoc):  # BaseSocUartTxHardened overrides add_uart() to use RS232PHYPatched
+class MySoC(BaseSoC):
     def __init__(self, **kwargs):
         kwargs.setdefault("cpu_type", "vexriscv")
-        kwargs.setdefault("cpu__varian", "minimal")
+        kwargs.setdefault("cpu_variant", "minimal")
         kwargs.setdefault("uart_baudrate", 115200)
 
-        BaseSocUartTxHardened.__init__(self,
+        BaseSoC.__init__(self,
             with_led_chaser=False,     # Disable chaser so we can claim user_led_n ourselves
             **kwargs
         )
