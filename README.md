@@ -89,13 +89,16 @@ See the [03wishBoneCsrHdl README](./03wishBoneCsrHdl/README.md) for details.
 
 ### 6. 04cpuAndIO
 
-A full LiteX RiscV SoC on the GateMate A1 EVB with a patched UART core that fixes intermittent echo corruption caused by a CC_BRAM FIFO output register mismatch. Shows how to:
-- Run a **VexRiscV SoC** with LiteX BIOS on the GateMate A1 EVB
+A full LiteX RiscV SoC on the GateMate A1 EVB with CSR-mapped peripherals. Shows how to:
+- Run a **VexRiscV** or **PicoRV32 SoC** with LiteX BIOS on the GateMate A1 EVB
 - Add a **CSR-mapped LED peripheral** controllable from C firmware running on the CPU
+- Add a **CRC32 peripheral** using a VHDL black-box via the GHDL Yosys plugin
 - Flash a pre-built bitstream without re-running synthesis
 
 **Features:**
-- VexRiscV SoC (`vexriscvLedPeripheral.py`) with patched UART and CSR-mapped LED peripheral
+- VexRiscV SoC (`vexriscvLedPeripheral.py`) with CSR-mapped LED peripheral
+- PicoRV32 SoC (`picorvLedAndCrc32Peripherial.py`) with both LED and CRC32 peripherals (VHDL via GHDL plugin)
+- Reusable CSR peripheral library (`mycsrlib/`) with CRC32Peripheral and GhdlCologneChipToolchain
 - `programChipOnly.py` utility to flash a pre-built bitstream without re-running synthesis
 
 **Location**: [`04cpuAndIO/`](./04cpuAndIO/)
@@ -152,10 +155,15 @@ Install: <br>
 │   │   └── crc.v                    # Generated Verilog CRC32 step module
 │   └── tbLib/
 │       └── crcLib.py                # Python reference CRC32 implementation
-├── 04cpuAndIO/                      # RiscV SoC with patched UART (CC_BRAM fix)
+├── 04cpuAndIO/                      # RiscV SoC with CSR-mapped peripherals
 │   ├── README.md
 │   ├── vexriscvLedPeripheral.py     # VexRiscV SoC + CSR-mapped LED peripheral
-│   └── programChipOnly.py           # Flash pre-built bitstream without rebuild
+│   ├── picorvLedAndCrc32Peripherial.py  # PicoRV32 SoC + LED + CRC32 (VHDL)
+│   ├── programChipOnly.py           # Flash pre-built bitstream without rebuild
+│   └── mycsrlib/                    # Reusable CSR peripheral library
+│       ├── crc32peripheral.py       # CRC32Peripheral + GhdlCologneChipToolchain
+│       ├── hdl/crc.vhdl             # VHDL CRC32 step entity
+│       └── INSTALL.md               # GHDL plugin build instructions
 ├── doc/                             # Documentation
 └── litexPatch/                      # LiteX patches
 ```
