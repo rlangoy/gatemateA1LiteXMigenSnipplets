@@ -20,8 +20,8 @@ This project demonstrates how to:
 |  (115200 baud)  |  TX/RX       |   |                                       |
 |                 |              |   |                                       |
 |                 |              |   v                                       |
-|                 |              | RiscV CPU (PicoRV32 / VexRiscV)           |
-|                 |              |   | Wishbone / AXI-lite                   |
+|                 |              | RiscV CPU (VexRiscV)                      |
+|                 |              |   | Wishbone                              |
 |                 |              |   v                                       |
 |                 |              | LiteX BIOS  (runs from BRAM)              |
 |                 |              |   |                                       |
