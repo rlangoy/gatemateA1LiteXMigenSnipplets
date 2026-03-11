@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 from migen import *
@@ -21,10 +20,7 @@ class LedPeripheral(Module, AutoCSR):
 # -------------------------------------------------
 # Custom SoC
 # -------------------------------------------------
-from uart_tx_fix import makeSocUartTxFix
-BaseSocUartTxHardened  = makeSocUartTxFix(BaseSoC)
-
-class MySoC(BaseSocUartTxHardened):  # BaseSocUartTxHardened overrides add_uart() to use RS232PHYPatched
+class MySoC(BaseSoc):  # BaseSocUartTxHardened overrides add_uart() to use RS232PHYPatched
     def __init__(self, **kwargs):
         kwargs.setdefault("cpu_type", "vexriscv")
         kwargs.setdefault("cpu__varian", "minimal")
