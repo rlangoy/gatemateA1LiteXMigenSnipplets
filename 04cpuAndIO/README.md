@@ -50,9 +50,7 @@ This project demonstrates how to:
 
 With Yosys 0.52 (e.g. Ubuntu 25.10 apt package), the BIOS console echoes garbled characters — typing "help" may display as "h%lp". The receive path works correctly (Enter still executes the right command), but the TX path is corrupted by a Yosys synthesis bug affecting UART FIFOs with depth > 4.
 
-**Fix:** Upgrade to Yosys 0.63+ (build from source or use OSS CAD Suite). No code changes needed.
-
-**Workaround:** Pass `--uart-fifo-depth 4` to avoid the buggy synthesis path.
+**Fix:** Upgrade to Yosys 0.63+  (No code changes needed.)
 
 ## Usage
 
