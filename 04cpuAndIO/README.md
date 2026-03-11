@@ -111,10 +111,11 @@ Built with Yosys 0.63, VexRiscV minimal variant, 24 MHz system clock.
 
 | Metric | Value |
 |---|---|
-| CPE utilisation | ~17% |
-| BRAM utilisation | ~31% |
-| GPIO utilisation | ~4% |
-| Max frequency | 27.96 MHz (constraint: 24 MHz) |
+| CPE utilisation | 16.4% (3368 / 20480) |
+| BRAM 20K utilisation | 1.6% (1 / 64) |
+| BRAM 40K utilisation | 28.1% (9 / 32) |
+| GPIO utilisation | 3.5% (5 / 144) |
+| Max frequency | 27.98 MHz (constraint: 24 MHz) |
 | Programmer | DirtyJTAG via openFPGALoader |
 
 #### picorvLedAndCrc32Peripherial - Build Results
@@ -138,9 +139,10 @@ Both builds use the minimal CPU variant at 24 MHz on the Olimex GateMate A1 EVB.
 
 | Metric | VexRiscV (LED only) | PicoRV32 (LED + CRC32) |
 |---|---|---|
-| CPE utilisation | ~17% | 18.0% |
-| BRAM utilisation | ~31% | 1.6% (20K) / 28.1% (40K) |
-| GPIO utilisation | ~4% | 3.5% |
-| Max frequency | 27.96 MHz | 22.62 MHz |
+| CPE utilisation | 16.4% (3368) | 18.0% (3694) |
+| BRAM 20K utilisation | 1.6% (1 / 64) | 1.6% (1 / 64) |
+| BRAM 40K utilisation | 28.1% (9 / 32) | 28.1% (9 / 32) |
+| GPIO utilisation | 3.5% (5 / 144) | 3.5% (5 / 144) |
+| Max frequency | 27.98 MHz | 22.62 MHz |
 | Timing met (24 MHz) | Yes | No |
 | VHDL peripherals | None | CRC32 (GHDL plugin) |
