@@ -89,16 +89,13 @@ See the [03wishBoneCsrHdl README](./03wishBoneCsrHdl/README.md) for details.
 
 ### 6. 04cpuAndIO
 
-A full LiteX RiscV SoC on the GateMate A1 EVB with a patched UART TX path that fixes first-byte reliability issues seen with some USB-UART bridges. Shows how to:
-- Replace the standard RS232PHY with `RS232PHYPatched` using a **factory/mixin pattern** (`make_uart_tx_hardened`)
-- Hook into `BaseSoC` via **Python MRO** — the patch is applied transparently during `BaseSoC.__init__`
+A full LiteX RiscV SoC on the GateMate A1 EVB with a patched UART core that fixes intermittent echo corruption caused by a CC_BRAM FIFO output register mismatch. Shows how to:
+- Run a **VexRiscV SoC** with LiteX BIOS on the GateMate A1 EVB
 - Add a **CSR-mapped LED peripheral** controllable from C firmware running on the CPU
-- Use `LiteXArgumentParser` to expose the full set of target, logging, and builder options
+- Flash a pre-built bitstream without re-running synthesis
 
 **Features:**
-- Drop-in replacement for `python3 -m litex_boards.targets.olimex_gatemate_a1_evb` with all original options preserved (video, ethernet, SDCard, flash)
-- Guard idle bit-times before the UART START bit eliminate first-byte corruption
-- VexRiscV variant (`vexriscvLedPeripheral.py`) with CSR-mapped LED peripheral
+- VexRiscV SoC (`vexriscvLedPeripheral.py`) with patched UART and CSR-mapped LED peripheral
 - `programChipOnly.py` utility to flash a pre-built bitstream without re-running synthesis
 
 **Location**: [`04cpuAndIO/`](./04cpuAndIO/)
@@ -106,10 +103,12 @@ A full LiteX RiscV SoC on the GateMate A1 EVB with a patched UART TX path that f
 See the [04cpuAndIO README](./04cpuAndIO/README.md) for details.
 
 ## Prerequisites
-Install: <br> 
+Install: <br>
 - LiteX <br>
 - ToolChain for FPGA. <br>
 - RISCV-V prosessor PicoRV32 (optional) <br>
+- **Yosys version > 0.52** — Yosys 0.52 has a bug affecting GateMate builds. Use Yosys 0.63 or newer. See [litex#2426](https://github.com/enjoy-digital/litex/issues/2426) for details. <br>
+
  Ubuntu 24.04, Install instruction for [GateMateA1-EVB](https://github.com/rlangoy/gatemateA1LiteXMigenSnipplets/blob/main/doc/litex_picorv32_gatemate_a1_e.md)
 
 ## Getting Started
@@ -153,10 +152,8 @@ Install: <br>
 │   │   └── crc.v                    # Generated Verilog CRC32 step module
 │   └── tbLib/
 │       └── crcLib.py                # Python reference CRC32 implementation
-├── 04cpuAndIO/                      # RiscV SoC with hardened UART TX
+├── 04cpuAndIO/                      # RiscV SoC with patched UART (CC_BRAM fix)
 │   ├── README.md
-│   ├── gateMateHardenedTxUart.py    # Drop-in board target with patched UART TX
-│   ├── uart_tx_hardened.py          # RS232PHYPatched + make_uart_tx_hardened factory
 │   ├── vexriscvLedPeripheral.py     # VexRiscV SoC + CSR-mapped LED peripheral
 │   └── programChipOnly.py           # Flash pre-built bitstream without rebuild
 ├── doc/                             # Documentation

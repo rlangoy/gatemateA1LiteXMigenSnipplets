@@ -127,8 +127,8 @@ source ~/.bashrc
 ```
 
 ---
-#### Note 
-The new toolchain oss-cad-suite (https://github.com/YosysHQ/oss-cad-suite-build) as of2026-02-11 11:43:26 +0100 ,does not work width LiteX (/litex/build/colognechip/colognechip.py needs patching (replace it with litexPatch/colognechip.py))
+#### Note
+- **Yosys version > 0.52 required** — Yosys 0.52 has a bug affecting GateMate builds. Use Yosys 0.63 or newer. See [litex#2426](https://github.com/enjoy-digital/litex/issues/2426) for details. Verify with `yosys -V` after installation.
 
 ## 6. Environment Ready
 

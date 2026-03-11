@@ -52,12 +52,12 @@ The stock LiteX UART core produces intermittent echo corruption (dropped or stal
 
 | File | Description |
 |---|---|
-| `gateMateHardenedTxUart.py` | Drop-in replacement for `olimex_gatemate_a1_evb` target: full LiteX SoC with patched UART. Exposes all original target options (video, ethernet, SDCard, flash) |
-| `uart_tx_fix.py` | `makeSocUartTxFix(BaseSoC)` factory: returns a subclass of any `BaseSoC` with `add_uart()` overridden to install `UARTPatched`. Contains `UARTPatched` and `_get_uart_fifo_patched` |
 | `vexriscvLedPeripheral.py` | VexRiscV SoC with patched UART and a CSR-mapped LED peripheral (`LedPeripheral`) controllable from firmware |
 | `programChipOnly.py` | Flash a pre-built bitstream to the FPGA SRAM via DirtyJTAG without re-running synthesis |
-| `installUartFix.py` | Copy `litex_patch/uart.py` directly into the installed LiteX package (alternative to the MRO factory approach) |
-| `litex_patch/uart.py` | Patched drop-in replacement for LiteX's `soc/cores/uart.py` with the CC_BRAM FIFO fix applied |
+
+## Prerequisites
+
+**Yosys version > 0.52 required** — Yosys 0.52 has a bug affecting GateMate builds. Use Yosys 0.63 or newer. See [litex#2426](https://github.com/enjoy-digital/litex/issues/2426) for details.
 
 ## Usage
 
