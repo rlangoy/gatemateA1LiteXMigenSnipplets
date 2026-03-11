@@ -105,7 +105,7 @@ The LiteX BIOS prints to UART at 115200 baud. Adjust the device node to match yo
 - **LedPeripheral** — same one-register `AutoCSR` module as above, driving `user_led_n`.
 - **CRC32Peripheral** — a CRC-32/ISO-HDLC accumulator backed by a VHDL entity (`mycsrlib/hdl/crc.vhdl`). Exposes two CSR registers: `data` (write a byte / read the running checksum) and `reset_ctrl` (write any value to reset the accumulator). Uses `GhdlCologneChipToolchain` to patch the Yosys script for GHDL plugin support at build time.
 
-####  vexriscvLedPeripheral - Build Results
+#### vexriscvLedPeripheral - Build Results
 
 Built with Yosys 0.63, VexRiscV minimal variant, 24 MHz system clock.
 
@@ -116,3 +116,31 @@ Built with Yosys 0.63, VexRiscV minimal variant, 24 MHz system clock.
 | GPIO utilisation | ~4% |
 | Max frequency | 27.96 MHz (constraint: 24 MHz) |
 | Programmer | DirtyJTAG via openFPGALoader |
+
+#### picorvLedAndCrc32Peripherial - Build Results
+
+Built with Yosys 0.63, PicoRV32 minimal variant, 24 MHz system clock. Includes VHDL CRC32 peripheral via GHDL plugin.
+
+| Metric | Value |
+|---|---|
+| CPE utilisation | 18.0% (3694 / 20480) |
+| BRAM 20K utilisation | 1.6% (1 / 64) |
+| BRAM 40K utilisation | 28.1% (9 / 32) |
+| GPIO utilisation | 3.5% (5 / 144) |
+| Max frequency | 22.62 MHz (constraint: 24 MHz) |
+| Programmer | DirtyJTAG via openFPGALoader |
+
+**Note:** The max frequency (22.62 MHz) is below the 24 MHz constraint. The design may exhibit timing violations at the target clock speed.
+
+#### VexRiscV vs PicoRV32 Comparison
+
+Both builds use the minimal CPU variant at 24 MHz on the Olimex GateMate A1 EVB.
+
+| Metric | VexRiscV (LED only) | PicoRV32 (LED + CRC32) |
+|---|---|---|
+| CPE utilisation | ~17% | 18.0% |
+| BRAM utilisation | ~31% | 1.6% (20K) / 28.1% (40K) |
+| GPIO utilisation | ~4% | 3.5% |
+| Max frequency | 27.96 MHz | 22.62 MHz |
+| Timing met (24 MHz) | Yes | No |
+| VHDL peripherals | None | CRC32 (GHDL plugin) |
