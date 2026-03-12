@@ -1,0 +1,685 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="950"
+   height="730"
+   viewBox="0 0 950 730"
+   font-family="'Segoe UI', Arial, sans-serif"
+   font-size="14"
+   version="1.1"
+   id="svg51"
+   sodipodi:docname="litex-architecture.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview51"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="0.99383562"
+     inkscape:cx="90.558236"
+     inkscape:cy="334.56237"
+     inkscape:window-width="4300"
+     inkscape:window-height="1711"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg51" />
+  <defs
+     id="defs4">
+    <marker
+       id="arrowGoldR"
+       markerWidth="10"
+       markerHeight="7"
+       refX="9"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="0 0, 10 3.5, 0 7"
+         fill="#C8952A"
+         id="polygon1" />
+    </marker>
+    <marker
+       id="arrowGreenUp"
+       markerWidth="10"
+       markerHeight="7"
+       refX="5"
+       refY="0"
+       orient="auto">
+      <polygon
+         points="0 7, 5 0, 10 7"
+         fill="#27AE60"
+         id="polygon2" />
+    </marker>
+    <marker
+       id="arrowGreenDown"
+       markerWidth="10"
+       markerHeight="7"
+       refX="5"
+       refY="7"
+       orient="auto">
+      <polygon
+         points="0 0, 5 7, 10 0"
+         fill="#27AE60"
+         id="polygon3" />
+    </marker>
+    <marker
+       id="arrowGreenR"
+       markerWidth="10"
+       markerHeight="7"
+       refX="9"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="0 0, 10 3.5, 0 7"
+         fill="#27AE60"
+         id="polygon4" />
+    </marker>
+    <marker
+       id="arrowGreenR-5"
+       markerWidth="10"
+       markerHeight="7"
+       refX="9"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="10,3.5 0,7 0,0 "
+         fill="#27ae60"
+         id="polygon4-1" />
+    </marker>
+    <marker
+       id="arrowGreenR-5-1"
+       markerWidth="10"
+       markerHeight="7"
+       refX="9"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="0,7 0,0 10,3.5 "
+         fill="#27ae60"
+         id="polygon4-1-5" />
+    </marker>
+  </defs>
+  <rect
+     width="1017.4156"
+     height="750.12408"
+     fill="#f5f7fa"
+     id="rect4"
+     x="-6.9176431"
+     y="-4.1505861"
+     style="stroke-width:0.999997" />
+  <!-- litex-boards box -->
+  <rect
+     x="30"
+     y="30"
+     width="440"
+     height="210"
+     rx="12"
+     fill="white"
+     stroke="#d0d8e4"
+     stroke-width="1.5"
+     id="rect5" />
+  <rect
+     x="30"
+     y="30"
+     width="440"
+     height="38"
+     rx="12"
+     fill="#4A90D9"
+     id="rect6" />
+  <rect
+     x="30"
+     y="50"
+     width="440"
+     height="18"
+     fill="#4A90D9"
+     id="rect7" />
+  <text
+     x="250"
+     y="55"
+     text-anchor="middle"
+     fill="white"
+     font-size="15"
+     id="text7">litex-boards</text>
+  <!-- Targets inner box -->
+  <rect
+     x="75"
+     y="88"
+     width="145"
+     height="128"
+     rx="8"
+     fill="white"
+     stroke="#d0d8e4"
+     stroke-width="1.5"
+     id="rect8" />
+  <text
+     x="147"
+     y="125"
+     text-anchor="middle"
+     fill="#333"
+     id="text8">Targets</text>
+  <g
+     transform="translate(125,138)"
+     fill="none"
+     stroke="#C8952A"
+     stroke-width="1.8"
+     id="g11">
+    <rect
+       x="8"
+       y="12"
+       width="26"
+       height="18"
+       rx="2"
+       id="rect9" />
+    <rect
+       x="4"
+       y="7"
+       width="26"
+       height="18"
+       rx="2"
+       id="rect10" />
+    <rect
+       x="0"
+       y="2"
+       width="26"
+       height="18"
+       rx="2"
+       id="rect11" />
+  </g>
+  <!-- Boards inner box -->
+  <rect
+     x="295"
+     y="88"
+     width="145"
+     height="128"
+     rx="8"
+     fill="white"
+     stroke="#d0d8e4"
+     stroke-width="1.5"
+     id="rect12" />
+  <text
+     x="367"
+     y="125"
+     text-anchor="middle"
+     fill="#333"
+     id="text12">Boards</text>
+  <g
+     transform="translate(347,138)"
+     fill="none"
+     stroke="#999"
+     stroke-width="1.8"
+     id="g14">
+    <rect
+       x="0"
+       y="0"
+       width="30"
+       height="22"
+       rx="3"
+       id="rect13" />
+    <line
+       x1="5"
+       y1="8"
+       x2="25"
+       y2="8"
+       id="line13" />
+    <line
+       x1="5"
+       y1="14"
+       x2="20"
+       y2="14"
+       id="line14" />
+  </g>
+  <!-- Gold arrow Targets → Boards -->
+  <line
+     x1="220"
+     y1="152"
+     x2="292"
+     y2="152"
+     stroke="#C8952A"
+     stroke-width="2"
+     marker-end="url(#arrowGoldR)"
+     id="line15" />
+  <!-- LiteX box: left side, vertically centered between litex-boards and Tools -->
+  <rect
+     x="55"
+     y="320"
+     width="130"
+     height="90"
+     rx="12"
+     fill="white"
+     stroke="#a8d5a2"
+     stroke-width="2"
+     id="rect15" />
+  <text
+     x="120"
+     y="371"
+     text-anchor="middle"
+     fill="#333"
+     font-size="15"
+     font-weight="500"
+     id="text15">LiteX</text>
+  <!-- Tools box -->
+  <rect
+     x="55"
+     y="600"
+     width="130"
+     height="70"
+     rx="12"
+     fill="white"
+     stroke="#d0d8e4"
+     stroke-width="1.5"
+     id="rect16" />
+  <text
+     x="120"
+     y="641"
+     text-anchor="middle"
+     fill="#333"
+     id="text16">Tools</text>
+  <!-- 
+    ARROWS:
+    LiteX left edge x=55, center y=365
+    litex-boards bottom y=240, left edge x=30..470
+    Tools top y=600
+
+    Double-headed arrow LiteX <-> litex-boards:
+      Up line:   from top of LiteX (120, 320) to bottom of litex-boards (120, 240)
+      Down line: parallel, offset a few px left
+  -->
+  <!-- Up arrow: LiteX → litex-boards (right track) -->
+  <!-- Down arrow: litex-boards → LiteX (left track) -->
+  <!-- Down arrow: LiteX → Tools (right track) -->
+  <!-- Up arrow: Tools → LiteX (left track) -->
+  <!-- Right arrow: LiteX → litex/soc -->
+  <line
+     x1="185.88043"
+     y1="365.25156"
+     x2="256.80481"
+     y2="365.25156"
+     stroke="#27ae60"
+     stroke-width="2.2"
+     marker-end="url(#arrowGreenR)"
+     id="line20" />
+  <line
+     x1="117.52627"
+     y1="410.73444"
+     x2="117.52627"
+     y2="598.72534"
+     stroke="#27ae60"
+     stroke-width="2.2"
+     marker-end="url(#arrowGreenR-5)"
+     id="line20-1"
+     style="marker-end:url(#arrowGreenR-5)" />
+  <line
+     x1="117.95775"
+     y1="319.45499"
+     x2="117.95775"
+     y2="243.51668"
+     stroke="#27ae60"
+     stroke-width="2.2"
+     marker-end="url(#arrowGreenR-5-1)"
+     id="line20-1-7"
+     style="marker-end:url(#arrowGreenR-5-1)" />
+  <!-- litex/soc outer box -->
+  <rect
+     x="260"
+     y="270"
+     width="660"
+     height="401.88837"
+     rx="12"
+     fill="#ffffff"
+     stroke="#d0d8e4"
+     stroke-width="1.4673"
+     id="rect20"
+     ry="12" />
+  <rect
+     x="260"
+     y="270"
+     width="660"
+     height="38"
+     rx="12"
+     fill="#4A90D9"
+     id="rect21" />
+  <rect
+     x="260"
+     y="290"
+     width="660"
+     height="18"
+     fill="#4A90D9"
+     id="rect22" />
+  <text
+     x="590"
+     y="295"
+     text-anchor="middle"
+     fill="white"
+     font-size="15"
+     id="text22">litex/soc</text>
+  <!-- cores sub-box -->
+  <rect
+     x="282"
+     y="324"
+     width="400"
+     height="332.44107"
+     rx="10"
+     fill="#fdecea"
+     stroke="#e57373"
+     stroke-width="1.5"
+     id="rect23"
+     ry="10" />
+  <rect
+     x="282"
+     y="324"
+     width="400"
+     height="34"
+     rx="10"
+     fill="#EF5350"
+     id="rect24" />
+  <rect
+     x="282"
+     y="340"
+     width="400"
+     height="18"
+     fill="#EF5350"
+     id="rect25" />
+  <text
+     x="482"
+     y="347"
+     text-anchor="middle"
+     fill="white"
+     font-size="14"
+     id="text25">cores</text>
+  <!-- IP box -->
+  <rect
+     x="298"
+     y="374"
+     width="210"
+     height="135.67195"
+     rx="8"
+     fill="#ffffff"
+     stroke="#e57373"
+     stroke-width="0.850637"
+     id="rect26"
+     ry="8" />
+  <rect
+     x="298"
+     y="374"
+     width="210"
+     height="30"
+     rx="8"
+     fill="#EF5350"
+     id="rect27" />
+  <rect
+     x="298"
+     y="388"
+     width="210"
+     height="16"
+     fill="#EF5350"
+     id="rect28" />
+  <text
+     x="403"
+     y="395"
+     text-anchor="middle"
+     fill="white"
+     font-size="13"
+     font-weight="700"
+     id="text28">IP</text>
+  <line
+     x1="403"
+     y1="407"
+     x2="403"
+     y2="637"
+     stroke="#f5b8b8"
+     stroke-width="1"
+     stroke-dasharray="4,3"
+     id="line28" />
+  <text
+     x="348"
+     y="432"
+     text-anchor="middle"
+     fill="#222"
+     font-size="13"
+     font-weight="700"
+     id="text29">UART</text>
+  <text
+     x="455"
+     y="432"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text30">I2C</text>
+  <text
+     x="348"
+     y="462"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text31">SPI</text>
+  <text
+     x="455"
+     y="462"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text32">JTAG</text>
+  <text
+     x="348"
+     y="492"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text33">PWM</text>
+  <text
+     x="455"
+     y="492"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text34">and more ...</text>
+  <!-- CPU box -->
+  <rect
+     x="524"
+     y="374"
+     width="142"
+     height="165"
+     rx="8"
+     fill="white"
+     stroke="#e57373"
+     stroke-width="1.2"
+     id="rect34" />
+  <rect
+     x="524"
+     y="374"
+     width="142"
+     height="30"
+     rx="8"
+     fill="#EF5350"
+     id="rect35" />
+  <rect
+     x="524"
+     y="388"
+     width="142"
+     height="16"
+     fill="#EF5350"
+     id="rect36" />
+  <text
+     x="595"
+     y="395"
+     text-anchor="middle"
+     fill="white"
+     font-size="13"
+     id="text36">CPU</text>
+  <text
+     x="595"
+     y="427"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text37">vexiiriscv</text>
+  <text
+     x="595"
+     y="454"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text38">picorv32</text>
+  <text
+     x="595"
+     y="481"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text39">and more...</text>
+  <!-- clock box -->
+  <rect
+     x="524"
+     y="554"
+     width="142"
+     height="90"
+     rx="8"
+     fill="white"
+     stroke="#e57373"
+     stroke-width="1.2"
+     id="rect39" />
+  <rect
+     x="524"
+     y="554"
+     width="142"
+     height="30"
+     rx="8"
+     fill="#EF5350"
+     id="rect40" />
+  <rect
+     x="524"
+     y="568"
+     width="142"
+     height="16"
+     fill="#EF5350"
+     id="rect41" />
+  <text
+     x="595"
+     y="575"
+     text-anchor="middle"
+     fill="white"
+     font-size="13"
+     id="text41">clock</text>
+  <text
+     x="595"
+     y="612"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text42">vendor PLL if</text>
+  <!-- interconnect sub-box -->
+  <rect
+     x="698"
+     y="324"
+     width="206"
+     height="168.43005"
+     rx="10"
+     fill="#e1f5fe"
+     stroke="#81d4fa"
+     stroke-width="1.5"
+     id="rect42"
+     ry="10" />
+  <rect
+     x="698"
+     y="324"
+     width="206"
+     height="34"
+     rx="10"
+     fill="#29B6F6"
+     id="rect43" />
+  <rect
+     x="698"
+     y="340"
+     width="206"
+     height="18"
+     fill="#29B6F6"
+     id="rect44" />
+  <text
+     x="801"
+     y="347"
+     text-anchor="middle"
+     fill="white"
+     font-size="14"
+     id="text44">interconnect</text>
+  <!-- CSR box -->
+  <rect
+     x="712"
+     y="380"
+     width="72"
+     height="46"
+     rx="7"
+     fill="white"
+     stroke="#81d4fa"
+     stroke-width="1.2"
+     id="rect45" />
+  <text
+     x="748"
+     y="408"
+     text-anchor="middle"
+     fill="#333"
+     font-size="13"
+     id="text45">CSR</text>
+  <!-- Bus box -->
+  <rect
+     x="800"
+     y="374"
+     width="90"
+     height="104.10613"
+     rx="8"
+     fill="#ffffff"
+     stroke="#81d4fa"
+     stroke-width="0.995749"
+     id="rect46"
+     ry="7.9999995" />
+  <rect
+     x="800"
+     y="374"
+     width="90"
+     height="30"
+     rx="8"
+     fill="#29B6F6"
+     id="rect47" />
+  <rect
+     x="800"
+     y="388"
+     width="90"
+     height="16"
+     fill="#29B6F6"
+     id="rect48" />
+  <text
+     x="845"
+     y="395"
+     text-anchor="middle"
+     fill="white"
+     font-size="13"
+     id="text48">Bus</text>
+  <text
+     x="845"
+     y="427"
+     text-anchor="middle"
+     fill="#444"
+     font-size="13"
+     id="text49">Wishbone</text>
+  <text
+     x="827.39148"
+     y="447.9628"
+     text-anchor="middle"
+     fill="#444444"
+     font-size="13px"
+     id="text50">AXI</text>
+  <text
+     x="835.94415"
+     y="468.42245"
+     text-anchor="middle"
+     fill="#444444"
+     font-size="13px"
+     id="text51">Avalon</text>
+</svg>
